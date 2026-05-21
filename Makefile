@@ -1,0 +1,62 @@
+# ===
+# Variables
+# ===
+CARGO := cargo
+BIN   := cli
+
+# ===
+# Targets
+# ===
+.DEFAULT_GOAL := help
+.PHONY: help dev run build check fmt lint test clean \
+        db-up db-down db-migrate db-reset \
+        docker-build setup
+
+# ===
+# Development
+# ===
+
+dev: ## Run server with hot reload
+	$(CARGO) watch -c -x "run -p $(BIN) -- serve"
+
+run: ## Run server
+	$(CARGO) run -p $(BIN) -- serve
+
+build: ## Build release binary
+	$(CARGO) build -p $(BIN) --release
+
+# ===
+# Code quality
+# ===
+
+check: ## Fast compile check
+	$(CARGO) check --workspace --all-targets
+
+fmt: ## Format code
+	$(CARGO) fmt --all
+
+lint: ## Run clippy
+	$(CARGO) clippy --workspace --all-targets -- -D warnings
+
+test: ## Run all tests
+	$(CARGO) test --workspace
+
+# ===
+# Setup
+# ===
+
+setup: ## Install required cargo tools
+	cargo install cargo-watch
+
+clean: ## Remove build artifacts
+	$(CARGO) clean
+
+# ===
+# Help
+# ===
+
+help: ## Show all commands
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

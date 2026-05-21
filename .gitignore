@@ -1,0 +1,14 @@
+
+# Mac temp files
+.DS_Store
+**/.DS_Store
+
+# Env files
+.env
+**/.env
+**/.env.*
+**/.env_*
+
+# Rust target directory
+target/
+**/target/
