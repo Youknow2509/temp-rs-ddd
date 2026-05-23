@@ -4,6 +4,8 @@
 CARGO := cargo
 BIN   := cli
 
+PATH_RUST_DOCS := docs/rustdoc
+
 # ===
 # Targets
 # ===
@@ -11,7 +13,14 @@ BIN   := cli
 .PHONY: help dev run build check fmt lint test clean \
         dev-cron run-cron \
         db-up db-down db-migrate db-reset \
-        docker-build setup
+        docker-build setup \
+		docs
+
+# ===
+# Docs
+# ===
+docs: ## Generate rustdoc documentation
+	$(CARGO) doc --workspace --no-deps --document-private-items --target-dir $(PATH_RUST_DOCS)
 
 # ===
 # Development

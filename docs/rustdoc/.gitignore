@@ -1,0 +1,4 @@
+debug/**
+*.json
+*.TAG
+**/.lock
