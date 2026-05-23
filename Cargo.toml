@@ -101,3 +101,6 @@ aws-sdk-s3          = { version = "1", features = ["behavior-version-latest"] }
 aws-credential-types = { version = "1", features = ["hardcoded-credentials"] }
 
 rdkafka = { version = "0.36", features = ["tokio", "ssl"] }
+
+tonic        = { version = "0.12", features = ["transport", "tls"] }
+tonic-health = "0.12"

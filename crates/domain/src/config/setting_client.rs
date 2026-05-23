@@ -53,6 +53,11 @@ pub struct GrpcClientsSetting {
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct GrpcClientSetting {
+    /// Run grpc.health.v1.Health/Check at startup before accepting traffic.
+    /// Set to false in dev for services that are not locally available.
+    #[serde(default = "default_true")]
+    pub health_check_enabled: bool,
+
     /// Service discovery / endpoint resolution
     pub endpoint: GrpcClientEndpointSetting,
 
@@ -235,4 +240,8 @@ pub struct GrpcClientAuthSetting {
     pub token: Option<String>,
     /// API key value when scheme = "api_key"
     pub api_key: Option<String>,
+}
+
+fn default_true() -> bool {
+    true
 }

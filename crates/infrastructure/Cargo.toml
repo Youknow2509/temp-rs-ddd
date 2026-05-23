@@ -26,5 +26,8 @@ aws-credential-types.workspace = true
 
 rdkafka.workspace = true
 
+tonic.workspace        = true
+tonic-health.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }

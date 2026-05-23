@@ -3,11 +3,13 @@
 use anyhow::{Context, Result};
 
 use domain::config::SystemConfig;
+use infrastructure::connection::GrpcClients;
 use infrastructure::connection::KafkaClient;
 use infrastructure::connection::PgPool;
 use infrastructure::connection::RedisPool;
 use infrastructure::connection::S3Client;
 use infrastructure::connection::ScyllaSession;
+use infrastructure::connection::grpc_conn;
 use infrastructure::connection::kafka_conn;
 use infrastructure::connection::postgres_conn;
 use infrastructure::connection::redis_conn;
@@ -25,6 +27,7 @@ pub struct Connections {
     pub scylla_session: ScyllaSession,
     pub s3_client: S3Client,
     pub kafka_client: KafkaClient,
+    pub grpc_clients: GrpcClients,
 }
 
 pub async fn init(config: &SystemConfig) -> Result<Connections> {
@@ -63,11 +66,18 @@ pub async fn init(config: &SystemConfig) -> Result<Connections> {
     .context("initialising Kafka client")?;
     info!("Kafka client initialised");
 
+    // gRPC clients use tonic which is natively async.
+    let grpc_clients = grpc_conn::create_clients(&config.clients.grpc_clients)
+        .await
+        .context("initialising gRPC clients")?;
+    info!("gRPC clients initialised");
+
     Ok(Connections {
         pg_pool,
         redis_pool,
         scylla_session,
         s3_client,
         kafka_client,
+        grpc_clients,
     })
 }

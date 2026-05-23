@@ -475,7 +475,7 @@ max_request_size = 1048576
 
 # --- defaults ---
 [clients.grpc_clients.defaults.endpoint]
-discovery = "dns"          # static | dns | consul | etcd | k8s
+discovery = "static"          # static | dns | consul | etcd | k8s
 addresses = []
 
 [clients.grpc_clients.defaults.connection]
@@ -536,38 +536,38 @@ key_file            = "certs/grpc/client.key"
 require_client_cert = false
 min_version         = "TLS1.2"
 
-# --- per-service: user-service ---
-[clients.grpc_clients.services."user-service".endpoint]
-discovery    = "dns"
-addresses    = []
-service_name = "user-service.internal:9090"
-authority    = "user-service.internal"
-service      = "com.example.user.UserService"
+# --- per-service: auth-service ---
+[clients.grpc_clients.services."auth-service".endpoint]
+discovery    = "static"
+addresses    = ["127.0.0.1:50052"]
+service_name = "auth-service-dev"
+authority    = "auth-service.internal"
+service      = "com.example.AuthService"
 
-[clients.grpc_clients.services."user-service".connection]
+[clients.grpc_clients.services."auth-service".connection]
 connect_timeout_ms = 2000
 initial_backoff_ms = 100
 max_backoff_ms     = 3000
 lazy_connect       = false
 tcp_nodelay        = true
 
-[clients.grpc_clients.services."user-service".timeouts]
+[clients.grpc_clients.services."auth-service".timeouts]
 request_timeout_ms  = 2000
 stream_timeout_ms   = 0
 shutdown_timeout_ms = 10000
 
-[clients.grpc_clients.services."user-service".pool]
+[clients.grpc_clients.services."auth-service".pool]
 connections_per_endpoint              = 4
 max_concurrent_streams_per_connection = 200
 idle_timeout_ms                       = 300000
 
-[clients.grpc_clients.services."user-service".keepalive]
+[clients.grpc_clients.services."auth-service".keepalive]
 http2_keepalive_interval_ms = 30000
 http2_keepalive_timeout_ms  = 10000
 keepalive_while_idle        = true
 tcp_keepalive_ms            = 60000
 
-[clients.grpc_clients.services."user-service".retry]
+[clients.grpc_clients.services."auth-service".retry]
 enabled                = true
 max_attempts           = 3
 initial_backoff_ms     = 50
@@ -576,104 +576,36 @@ backoff_multiplier     = 2.0
 retryable_status_codes = ["UNAVAILABLE", "DEADLINE_EXCEEDED"]
 use_jitter             = true
 
-[clients.grpc_clients.services."user-service".circuit_breaker]
+[clients.grpc_clients.services."auth-service".circuit_breaker]
 enabled                = true
 failure_threshold      = 20
 success_threshold      = 5
 open_state_duration_ms = 10000
 rolling_window_ms      = 30000
 
-[clients.grpc_clients.services."user-service".load_balancing]
+[clients.grpc_clients.services."auth-service".load_balancing]
 policy = "round_robin"
 
-[clients.grpc_clients.services."user-service".limits]
+[clients.grpc_clients.services."auth-service".limits]
 max_decoding_message_size = 4194304
 max_encoding_message_size = 4194304
 max_frame_size            = 16384
 
-[clients.grpc_clients.services."user-service".compression]
+[clients.grpc_clients.services."auth-service".compression]
 send_codec    = "gzip"
 accept_codecs = ["gzip", "zstd"]
 
-[clients.grpc_clients.services."user-service".tls]
+[clients.grpc_clients.services."auth-service".tls]
 is_enabled          = false
 cert_file           = "certs/grpc/client.crt"
 key_file            = "certs/grpc/client.key"
 require_client_cert = false
 min_version         = "TLS1.2"
 
-[clients.grpc_clients.services."user-service".auth]
+[clients.grpc_clients.services."auth-service".auth]
 scheme = "bearer"
 header = "authorization"
 token  = ""
-
-# --- per-service: billing-service ---
-[clients.grpc_clients.services."billing-service".endpoint]
-discovery    = "static"
-addresses    = ["billing-1.internal:9090", "billing-2.internal:9090"]
-service_name = "billing-service"
-service      = "com.example.billing.BillingService"
-
-[clients.grpc_clients.services."billing-service".connection]
-connect_timeout_ms = 3000
-initial_backoff_ms = 200
-max_backoff_ms     = 5000
-lazy_connect       = false
-tcp_nodelay        = true
-
-[clients.grpc_clients.services."billing-service".timeouts]
-request_timeout_ms  = 8000
-stream_timeout_ms   = 0
-shutdown_timeout_ms = 15000
-
-[clients.grpc_clients.services."billing-service".pool]
-connections_per_endpoint              = 2
-max_concurrent_streams_per_connection = 100
-idle_timeout_ms                       = 300000
-
-[clients.grpc_clients.services."billing-service".keepalive]
-http2_keepalive_interval_ms = 30000
-http2_keepalive_timeout_ms  = 10000
-keepalive_while_idle        = true
-tcp_keepalive_ms            = 60000
-
-[clients.grpc_clients.services."billing-service".retry]
-enabled                = false
-max_attempts           = 1
-initial_backoff_ms     = 100
-max_backoff_ms         = 1000
-backoff_multiplier     = 2.0
-retryable_status_codes = []
-use_jitter             = true
-
-[clients.grpc_clients.services."billing-service".circuit_breaker]
-enabled                = true
-failure_threshold      = 10
-success_threshold      = 3
-open_state_duration_ms = 15000
-rolling_window_ms      = 30000
-
-[clients.grpc_clients.services."billing-service".load_balancing]
-policy = "least_request"
-
-[clients.grpc_clients.services."billing-service".limits]
-max_decoding_message_size = 8388608
-max_encoding_message_size = 8388608
-max_frame_size            = 16384
-
-[clients.grpc_clients.services."billing-service".compression]
-send_codec    = "gzip"
-accept_codecs = ["gzip", "zstd"]
-
-[clients.grpc_clients.services."billing-service".tls]
-is_enabled          = true
-cert_file           = "certs/grpc/client.crt"
-key_file            = "certs/grpc/client.key"
-require_client_cert = true
-min_version         = "TLS1.3"
-
-[clients.grpc_clients.services."billing-service".auth]
-scheme = "mtls"
 
 # ===
 # telemetry — logger, metrics, tracing
