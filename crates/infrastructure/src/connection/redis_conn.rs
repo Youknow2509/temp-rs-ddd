@@ -1,7 +1,7 @@
 use std::fmt;
 use std::time::Duration;
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use deadpool_redis::{Config, Pool, Runtime};
 
 use domain::config::RedisSettingRepository;
@@ -70,7 +70,11 @@ fn build_standalone_url(setting: &RedisSettingRepository) -> Result<String> {
         .as_ref()
         .ok_or_else(|| anyhow!("standalone config missing for type=standalone"))?;
 
-    let scheme = if setting.tls.is_enabled { "rediss" } else { "redis" };
+    let scheme = if setting.tls.is_enabled {
+        "rediss"
+    } else {
+        "redis"
+    };
 
     Ok(if setting.password.is_empty() {
         format!(
@@ -128,7 +132,11 @@ fn build_cluster_pool(setting: &RedisSettingRepository) -> Result<deadpool_redis
         .as_ref()
         .ok_or_else(|| anyhow!("cluster config missing for type=cluster"))?;
 
-    let scheme = if setting.tls.is_enabled { "rediss" } else { "redis" };
+    let scheme = if setting.tls.is_enabled {
+        "rediss"
+    } else {
+        "redis"
+    };
 
     let nodes: Vec<String> = cluster
         .cluster_addrs
@@ -184,7 +192,10 @@ fn ping_cluster(pool: &deadpool_redis::cluster::Pool) -> Result<()> {
         .context("building redis cluster ping runtime")?;
 
     rt.block_on(async {
-        let mut conn = pool.get().await.context("acquiring redis cluster connection")?;
+        let mut conn = pool
+            .get()
+            .await
+            .context("acquiring redis cluster connection")?;
         redis::cmd("PING")
             .query_async::<String>(&mut *conn)
             .await

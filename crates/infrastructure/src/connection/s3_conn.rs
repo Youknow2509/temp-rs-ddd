@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use aws_credential_types::Credentials;
+use aws_sdk_s3::Client;
 use aws_sdk_s3::config::retry::RetryConfig;
 use aws_sdk_s3::config::timeout::TimeoutConfig;
 use aws_sdk_s3::config::{Builder as S3ConfigBuilder, Region};
-use aws_sdk_s3::Client;
 
 use domain::config::ObjectStorageSetting;
 
@@ -42,15 +42,12 @@ async fn build_client(setting: &ObjectStorageSetting) -> Result<S3Client> {
         "static",
     );
 
-    let retry_config = RetryConfig::standard()
-        .with_max_attempts(setting.retry.max_retries + 1);
+    let retry_config = RetryConfig::standard().with_max_attempts(setting.retry.max_retries + 1);
 
     let timeout_config = TimeoutConfig::builder()
         .connect_timeout(Duration::from_millis(setting.timeouts.connect_timeout_ms))
         .read_timeout(Duration::from_millis(setting.timeouts.request_timeout_ms))
-        .operation_attempt_timeout(Duration::from_millis(
-            setting.timeouts.operation_timeout_ms,
-        ))
+        .operation_attempt_timeout(Duration::from_millis(setting.timeouts.operation_timeout_ms))
         .build();
 
     let mut config_builder = S3ConfigBuilder::new()

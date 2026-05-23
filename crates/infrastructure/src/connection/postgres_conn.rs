@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod, Runtime};
 use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;
-use tokio_postgres::{config::SslMode, Config as PgConfig};
+use tokio_postgres::{Config as PgConfig, config::SslMode};
 
 use domain::config::PostgresqlSettingRepository;
 
@@ -26,8 +26,12 @@ pub fn create_pool(setting: &PostgresqlSettingRepository) -> Result<PgPool> {
     let pool = PgPool::builder(mgr)
         .runtime(Runtime::Tokio1)
         .max_size(setting.pool.max_conns as usize)
-        .wait_timeout(Some(Duration::from_secs(setting.timeouts.connection_timeout)))
-        .create_timeout(Some(Duration::from_secs(setting.timeouts.connection_timeout)))
+        .wait_timeout(Some(Duration::from_secs(
+            setting.timeouts.connection_timeout,
+        )))
+        .create_timeout(Some(Duration::from_secs(
+            setting.timeouts.connection_timeout,
+        )))
         .recycle_timeout(Some(Duration::from_secs(setting.pool.max_conn_idle_time)))
         .build()
         .context("building postgres connection pool")?;
@@ -118,8 +122,8 @@ fn build_tls(setting: &PostgresqlSettingRepository) -> Result<MakeTlsConnector> 
         if let Some(ref ca_path) = tls.client_ca_file {
             let ca_pem = std::fs::read(ca_path)
                 .with_context(|| format!("reading CA cert: {}", ca_path.display()))?;
-            let ca = native_tls::Certificate::from_pem(&ca_pem)
-                .context("parsing CA certificate")?;
+            let ca =
+                native_tls::Certificate::from_pem(&ca_pem).context("parsing CA certificate")?;
             builder.add_root_certificate(ca);
         }
     }

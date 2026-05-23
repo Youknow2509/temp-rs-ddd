@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Endpoint, Identity};
-use tonic_health::pb::health_client::HealthClient;
-use tonic_health::pb::HealthCheckRequest;
 use tonic_health::ServingStatus;
+use tonic_health::pb::HealthCheckRequest;
+use tonic_health::pb::health_client::HealthClient;
 use tracing::warn;
 
 use domain::config::{GrpcClientSetting, GrpcClientsSetting};
@@ -130,7 +130,9 @@ fn make_endpoint(
         .http2_adaptive_window(true);
 
     if let Some(tls_cfg) = tls {
-        ep = ep.tls_config(tls_cfg.clone()).context("applying TLS config to endpoint")?;
+        ep = ep
+            .tls_config(tls_cfg.clone())
+            .context("applying TLS config to endpoint")?;
     }
 
     Ok(ep)
@@ -174,11 +176,7 @@ async fn health_check(channel: &Channel, name: &str, cfg: &GrpcClientSetting) ->
     let service = cfg.endpoint.service.as_deref().unwrap_or("").to_owned();
     let timeout = Duration::from_millis(cfg.connection.connect_timeout_ms);
 
-    let result = tokio::time::timeout(
-        timeout,
-        client.check(HealthCheckRequest { service }),
-    )
-    .await;
+    let result = tokio::time::timeout(timeout, client.check(HealthCheckRequest { service })).await;
 
     match result {
         Err(_elapsed) => {
@@ -201,9 +199,7 @@ async fn health_check(channel: &Channel, name: &str, cfg: &GrpcClientSetting) ->
             if status == ServingStatus::Serving as i32 {
                 Ok(())
             } else {
-                bail!(
-                    "gRPC health check for '{name}' returned non-SERVING status code {status}"
-                );
+                bail!("gRPC health check for '{name}' returned non-SERVING status code {status}");
             }
         }
     }

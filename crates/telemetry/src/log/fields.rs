@@ -40,9 +40,7 @@ where
 
         map.insert(
             constants::JSON_FIELD_TIMESTAMP.into(),
-            Value::String(
-                chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true),
-            ),
+            Value::String(chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)),
         );
 
         map.insert(

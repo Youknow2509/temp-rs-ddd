@@ -2,7 +2,7 @@ use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use scylla::frame::Compression;
 use scylla::frame::types::{Consistency, SerialConsistency};
 use scylla::load_balancing::DefaultPolicy;
@@ -34,7 +34,10 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
         .default_execution_profile_handle(exec_profile.into_handle());
 
     if !setting.authentication.username.is_empty() {
-        builder = builder.user(&setting.authentication.username, &setting.authentication.password);
+        builder = builder.user(
+            &setting.authentication.username,
+            &setting.authentication.password,
+        );
     }
 
     if !setting.cluster.keyspace.is_empty() {
@@ -50,8 +53,8 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
     builder = builder.pool_size(PoolSize::PerHost(pool_size));
 
     if setting.pool.keepalive_interval_ms > 0 {
-        builder = builder
-            .keepalive_interval(Duration::from_millis(setting.pool.keepalive_interval_ms));
+        builder =
+            builder.keepalive_interval(Duration::from_millis(setting.pool.keepalive_interval_ms));
     }
 
     if setting.ssl.enabled {
@@ -83,13 +86,18 @@ fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<Execut
             "default" => Box::new(DefaultRetryPolicy::new()),
             "downgrading" => Box::new(DowngradingConsistencyRetryPolicy::new()),
             "fallthrough" => Box::new(FallthroughRetryPolicy::new()),
-            other => bail!("unknown retry policy '{}'; expected default|downgrading|fallthrough", other),
+            other => bail!(
+                "unknown retry policy '{}'; expected default|downgrading|fallthrough",
+                other
+            ),
         };
 
     let mut profile_builder = ExecutionProfile::builder()
         .consistency(consistency)
         .serial_consistency(Some(serial_consistency))
-        .request_timeout(Some(Duration::from_millis(setting.timeouts.request_timeout_ms)))
+        .request_timeout(Some(Duration::from_millis(
+            setting.timeouts.request_timeout_ms,
+        )))
         .load_balancing_policy(load_balancing)
         .retry_policy(retry_policy);
 
@@ -104,9 +112,7 @@ fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<Execut
     Ok(profile_builder.build())
 }
 
-fn build_ssl_context(
-    setting: &ScyllaDbSettingRepository,
-) -> Result<openssl::ssl::SslContext> {
+fn build_ssl_context(setting: &ScyllaDbSettingRepository) -> Result<openssl::ssl::SslContext> {
     use openssl::ssl::{SslContextBuilder, SslFiletype, SslMethod, SslVerifyMode};
 
     let mut ctx_builder =

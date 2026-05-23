@@ -74,10 +74,7 @@ fn build_base_config(conn: &KafkaConnectionSetting) -> Result<ClientConfig> {
             "socket.connection.setup.timeout.ms",
             conn.timeouts.connection_timeout_ms.to_string(),
         )
-        .set(
-            "retry.backoff.ms",
-            conn.retry.retry_backoff_ms.to_string(),
-        )
+        .set("retry.backoff.ms", conn.retry.retry_backoff_ms.to_string())
         .set(
             "reconnect.backoff.ms",
             conn.retry.reconnect_backoff_ms.to_string(),
@@ -122,10 +119,7 @@ fn apply_security(cfg: &mut ClientConfig, conn: &KafkaConnectionSetting) -> Resu
                 );
             }
             if !tls.key_file.as_os_str().is_empty() {
-                cfg.set(
-                    "ssl.key.location",
-                    tls.key_file.to_string_lossy().as_ref(),
-                );
+                cfg.set("ssl.key.location", tls.key_file.to_string_lossy().as_ref());
             }
         }
     }
@@ -144,32 +138,35 @@ fn build_producer_config(
     #[allow(clippy::integer_division)]
     let buffer_kb = (prod.batching.buffer_memory / 1024).max(1);
 
-    cfg.set("request.timeout.ms", conn.timeouts.request_timeout_ms.to_string())
-        .set("acks", prod.reliability.acks.as_str())
-        .set(
-            "enable.idempotence",
-            prod.reliability.enable_idempotence.to_string(),
-        )
-        .set(
-            "max.in.flight.requests.per.connection",
-            prod.reliability
-                .max_in_flight_requests_per_connection
-                .to_string(),
-        )
-        .set("retries", prod.reliability.retries.to_string())
-        .set(
-            "delivery.timeout.ms",
-            prod.reliability.delivery_timeout_ms.to_string(),
-        )
-        .set("batch.size", prod.batching.batch_size.to_string())
-        .set("linger.ms", prod.batching.linger_ms.to_string())
-        .set("queue.buffering.max.kbytes", buffer_kb.to_string())
-        .set(
-            "message.max.bytes",
-            prod.batching.max_request_size.to_string(),
-        )
-        .set("compression.type", prod.compression_type.as_str())
-        .set("partitioner", map_partitioner(prod.partitioner.as_str()));
+    cfg.set(
+        "request.timeout.ms",
+        conn.timeouts.request_timeout_ms.to_string(),
+    )
+    .set("acks", prod.reliability.acks.as_str())
+    .set(
+        "enable.idempotence",
+        prod.reliability.enable_idempotence.to_string(),
+    )
+    .set(
+        "max.in.flight.requests.per.connection",
+        prod.reliability
+            .max_in_flight_requests_per_connection
+            .to_string(),
+    )
+    .set("retries", prod.reliability.retries.to_string())
+    .set(
+        "delivery.timeout.ms",
+        prod.reliability.delivery_timeout_ms.to_string(),
+    )
+    .set("batch.size", prod.batching.batch_size.to_string())
+    .set("linger.ms", prod.batching.linger_ms.to_string())
+    .set("queue.buffering.max.kbytes", buffer_kb.to_string())
+    .set(
+        "message.max.bytes",
+        prod.batching.max_request_size.to_string(),
+    )
+    .set("compression.type", prod.compression_type.as_str())
+    .set("partitioner", map_partitioner(prod.partitioner.as_str()));
 
     if let Some(tx) = &prod.transaction {
         cfg.set("transactional.id", tx.transactional_id.as_str())
@@ -182,18 +179,12 @@ fn build_producer_config(
     Ok(cfg)
 }
 
-fn build_consumer_config(
-    base: &ClientConfig,
-    cons: &KafkaConsumerSetting,
-) -> Result<ClientConfig> {
+fn build_consumer_config(base: &ClientConfig, cons: &KafkaConsumerSetting) -> Result<ClientConfig> {
     let mut cfg = base.clone();
 
     cfg.set("allow.auto.create.topics", "true")
         .set("group.id", cons.group.group_id.as_str())
-        .set(
-            "auto.offset.reset",
-            cons.offset.auto_offset_reset.as_str(),
-        )
+        .set("auto.offset.reset", cons.offset.auto_offset_reset.as_str())
         .set(
             "enable.auto.commit",
             cons.offset.enable_auto_commit.to_string(),

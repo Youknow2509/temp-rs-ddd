@@ -7,10 +7,8 @@ pub async fn wait() -> Result<()> {
     {
         use tokio::signal::unix::{SignalKind, signal};
 
-        let mut sigint =
-            signal(SignalKind::interrupt()).context("registering SIGINT handler")?;
-        let mut sigterm =
-            signal(SignalKind::terminate()).context("registering SIGTERM handler")?;
+        let mut sigint = signal(SignalKind::interrupt()).context("registering SIGINT handler")?;
+        let mut sigterm = signal(SignalKind::terminate()).context("registering SIGTERM handler")?;
 
         tokio::select! {
             _ = sigint.recv()  => tracing::info!("received SIGINT"),
