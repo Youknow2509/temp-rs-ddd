@@ -16,7 +16,7 @@ impl Server {
     pub async fn run() -> Result<()> {
         let bootstrap = bootstrap::init().await?;
         let wired = wiring::wire(bootstrap)?;
-        run::start(&wired)?;
-        shutdown::drain(wired).await
+        let handles = run::start(&wired)?;
+        shutdown::drain(wired, handles).await
     }
 }

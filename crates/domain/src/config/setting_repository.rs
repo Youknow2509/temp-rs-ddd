@@ -9,6 +9,48 @@ pub struct RepositorySystemSetting {
     pub redis: RedisSettingRepository,
     pub object_storage: ObjectStorageSetting,
     pub scylladb: ScyllaDbSettingRepository,
+    pub local_cache: LocalCacheSetting,
+}
+
+// ===
+// Local Cache
+// ===
+
+/// Local in-process cache setting (e.g. Moka, LRU)
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct LocalCacheSetting {
+    /// Maximum number of entries the cache may hold
+    pub max_capacity: u64,
+
+    /// Pre-allocated number of slots at startup (hint, not a hard limit)
+    pub initial_capacity: u64,
+
+    /// Global default TTL in seconds (0 = entries never expire)
+    pub time_to_live_secs: u64,
+
+    /// Evict an entry if it has not been accessed for this many seconds
+    /// (0 = disabled)
+    pub time_to_idle_secs: u64,
+
+    pub eviction: LocalCacheEvictionSetting,
+    pub concurrency: LocalCacheConcurrencySetting,
+}
+
+/// Eviction policy
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct LocalCacheEvictionSetting {
+    /// `lru` | `lfu` | `tinylfu`
+    pub policy: String,
+}
+
+/// Concurrency / sharding
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct LocalCacheConcurrencySetting {
+    /// Number of internal shards for concurrent access (power of 2 recommended)
+    pub num_segments: u32,
 }
 
 // ===

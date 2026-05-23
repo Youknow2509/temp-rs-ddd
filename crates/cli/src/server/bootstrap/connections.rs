@@ -1,5 +1,7 @@
 //! Long-lived connection pools owned for the lifetime of the process.
 
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
 
 use domain::config::SystemConfig;
@@ -22,9 +24,9 @@ use tracing::info;
 /// repositories, the Kafka publisher, etc.
 #[derive(Debug)]
 pub struct Connections {
-    pub pg_pool: PgPool,
+    pub pg_pool: Arc<PgPool>,
     pub redis_pool: RedisPool,
-    pub scylla_session: ScyllaSession,
+    pub scylla_session: Arc<ScyllaSession>,
     pub s3_client: S3Client,
     pub kafka_client: KafkaClient,
     pub grpc_clients: GrpcClients,
@@ -36,16 +38,20 @@ pub async fn init(config: &SystemConfig) -> Result<Connections> {
     // those nested block_on calls run without conflicting with the outer runtime.
     let (pg_pool, redis_pool, scylla_session, s3_client) =
         tokio::task::block_in_place(|| -> Result<_> {
-            let pg = postgres_conn::create_pool(&config.repository.postgresql)
-                .context("initialising PostgreSQL pool")?;
+            let pg = Arc::new(
+                postgres_conn::create_pool(&config.repository.postgresql)
+                    .context("initialising PostgreSQL pool")?,
+            );
             info!("PostgreSQL connection pool initialised");
 
             let redis = redis_conn::create_pool(&config.repository.redis)
                 .context("initialising Redis pool")?;
             info!("Redis connection pool initialised");
 
-            let scylla = scylla_conn::create_session(&config.repository.scylladb)
-                .context("initialising ScyllaDB session")?;
+            let scylla = Arc::new(
+                scylla_conn::create_session(&config.repository.scylladb)
+                    .context("initialising ScyllaDB session")?,
+            );
             info!("ScyllaDB session initialised");
 
             let s3 = s3_conn::create_client(&config.repository.object_storage)

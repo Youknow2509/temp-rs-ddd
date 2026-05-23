@@ -3,37 +3,84 @@
 //! Direction of dependency (outer -> inner):
 //!   Connections ──► Repositories ──► Services ──► UseCases
 //!
-//! Only `UseCases` (plus the raw config) are handed off to the `run` phase.
+//! Bootstrap is fully destructured here so `redis_pool` can be moved
+//! directly into `Repositories` without Option or Arc.
 
 pub mod repositories;
 pub mod services;
 pub mod use_cases;
 
 use anyhow::Result;
+use telemetry::TelemetryGuard;
+
+use domain::config::SystemConfig;
+use infrastructure::{
+    cache::{MokaCache, RedisCache},
+    connection::{GrpcClients, KafkaClient, PgPool, S3Client, ScyllaSession},
+};
+
+use std::sync::Arc;
 
 use super::bootstrap::Bootstrap;
 
 use self::{repositories::Repositories, services::Services, use_cases::UseCases};
 
-/// Fully-wired application: bootstrap primitives + the DDD layer stack.
+/// Everything the run and shutdown phases need — flattened for clarity.
+/// Bootstrap is consumed during wiring; only the fields actually needed
+/// afterwards are kept.
 #[derive(Debug)]
-#[allow(dead_code)] // fields consumed once real adapters land
+#[allow(dead_code)]
 pub struct Wired {
-    pub bootstrap: Bootstrap,
-    pub repositories: Repositories,
+    // ── Config ────────────────────────────────────────────────────────────
+    pub config: SystemConfig,
+
+    // ── Shared connections (outlive wiring) ───────────────────────────────
+    pub pg_pool: Arc<PgPool>,
+    pub scylla_session: Arc<ScyllaSession>,
+    pub s3_client: S3Client,
+    pub kafka_client: KafkaClient,
+    pub grpc_clients: GrpcClients,
+
+    // ── DDD layers ────────────────────────────────────────────────────────
+    pub repositories: Repositories<MokaCache, RedisCache>,
     pub services: Services,
     pub use_cases: UseCases,
+
+    // ── Telemetry (dropped last in shutdown) ──────────────────────────────
+    pub telemetry_guard: TelemetryGuard,
 }
 
 pub fn wire(bootstrap: Bootstrap) -> Result<Wired> {
-    let repositories = repositories::build(&bootstrap.connections)?;
+    let Bootstrap {
+        config,
+        connections,
+        telemetry_guard,
+    } = bootstrap;
+
+    // Destructure Connections so redis_pool is moved — no Arc, no Option.
+    let super::bootstrap::connections::Connections {
+        pg_pool,
+        redis_pool,
+        scylla_session,
+        s3_client,
+        kafka_client,
+        grpc_clients,
+    } = connections;
+
+    let repositories = repositories::build(&config, redis_pool)?;
     let services = services::build(&repositories)?;
     let use_cases = use_cases::build(&services)?;
 
     Ok(Wired {
-        bootstrap,
+        config,
+        pg_pool,
+        scylla_session,
+        s3_client,
+        kafka_client,
+        grpc_clients,
         repositories,
         services,
         use_cases,
+        telemetry_guard,
     })
 }

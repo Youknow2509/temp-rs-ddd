@@ -1,8 +1,4 @@
 //! Phase 3: start every inbound interface backed by the wired application.
-//!
-//! In the real implementation each `start` will spawn a long-running async
-//! task; here they are sync stubs that return immediately so the orchestration
-//! shape is visible end-to-end.
 
 pub mod grpc;
 pub mod http;
@@ -10,13 +6,34 @@ pub mod kafka_consumer;
 pub mod websocket;
 
 use anyhow::Result;
+use tokio::task::JoinHandle;
 
 use super::wiring::Wired;
 
-pub fn start(wired: &Wired) -> Result<()> {
-    http::start(wired)?;
-    grpc::start(wired)?;
-    websocket::start(wired)?;
-    kafka_consumer::start(wired)?;
-    Ok(())
+/// Handles returned by each interface so shutdown can stop them gracefully.
+#[derive(Debug)]
+pub struct RunHandles {
+    pub http: JoinHandle<()>,
+    pub grpc: JoinHandle<()>,
+    pub websocket: JoinHandle<()>,
+    pub kafka_consumer: JoinHandle<()>,
+}
+
+impl RunHandles {
+    /// Abort all interface tasks immediately (best-effort graceful stop).
+    pub fn stop_all(self) {
+        self.http.abort();
+        self.grpc.abort();
+        self.websocket.abort();
+        self.kafka_consumer.abort();
+    }
+}
+
+pub fn start(wired: &Wired) -> Result<RunHandles> {
+    Ok(RunHandles {
+        http: http::start(wired)?,
+        grpc: grpc::start(wired)?,
+        websocket: websocket::start(wired)?,
+        kafka_consumer: kafka_consumer::start(wired)?,
+    })
 }

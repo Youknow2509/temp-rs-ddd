@@ -298,6 +298,19 @@ max_retries       = 3
 min_retry_backoff = 8
 max_retry_backoff = 512
 
+# --- Local cache ---
+[repository.local_cache]
+max_capacity       = 10000   # max number of entries
+initial_capacity   = 256     # pre-allocated slots at startup
+time_to_live_secs  = 300     # global TTL (0 = never expires)
+time_to_idle_secs  = 60      # evict if not accessed for this long (0 = disabled)
+
+[repository.local_cache.eviction]
+policy = "tinylfu"   # lru | lfu | tinylfu
+
+[repository.local_cache.concurrency]
+num_segments = 64   # internal shards (power of 2)
+
 # --- Object storage ---
 [repository.object_storage]
 type              = "s3"

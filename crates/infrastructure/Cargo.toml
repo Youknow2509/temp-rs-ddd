@@ -18,6 +18,9 @@ native-tls.workspace          = true
 redis.workspace        = true
 deadpool-redis.workspace = true
 
+moka.workspace       = true
+serde_json.workspace = true
+
 scylla.workspace  = true
 openssl.workspace = true
 

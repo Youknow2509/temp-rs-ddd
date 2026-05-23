@@ -3,12 +3,13 @@
 use anyhow::Result;
 
 use super::repositories::Repositories;
+use infrastructure::cache::{MokaCache, RedisCache};
 
 #[derive(Debug, Default)]
 pub struct Services {
     // TODO: UserService, BillingService, NotificationService, ...
 }
 
-pub fn build(_repositories: &Repositories) -> Result<Services> {
+pub fn build(_repositories: &Repositories<MokaCache, RedisCache>) -> Result<Services> {
     Ok(Services::default())
 }
