@@ -91,7 +91,7 @@ fn build_base_config(conn: &KafkaConnectionSetting) -> Result<ClientConfig> {
 
 fn apply_security(cfg: &mut ClientConfig, conn: &KafkaConnectionSetting) -> Result<()> {
     let has_sasl = conn.sasl.is_some();
-    let has_tls = conn.tls.as_ref().map_or(false, |t| t.is_enabled);
+    let has_tls = conn.tls.as_ref().is_some_and(|t| t.is_enabled);
 
     let protocol = match (has_sasl, has_tls) {
         (false, false) => "PLAINTEXT",
@@ -107,20 +107,20 @@ fn apply_security(cfg: &mut ClientConfig, conn: &KafkaConnectionSetting) -> Resu
             .set("sasl.password", sasl.password.as_str());
     }
 
-    if let Some(tls) = &conn.tls {
-        if tls.is_enabled {
-            if let Some(ca) = &tls.client_ca_file {
-                cfg.set("ssl.ca.location", ca.to_string_lossy().as_ref());
-            }
-            if !tls.cert_file.as_os_str().is_empty() {
-                cfg.set(
-                    "ssl.certificate.location",
-                    tls.cert_file.to_string_lossy().as_ref(),
-                );
-            }
-            if !tls.key_file.as_os_str().is_empty() {
-                cfg.set("ssl.key.location", tls.key_file.to_string_lossy().as_ref());
-            }
+    if let Some(tls) = &conn.tls
+        && tls.is_enabled
+    {
+        if let Some(ca) = &tls.client_ca_file {
+            cfg.set("ssl.ca.location", ca.to_string_lossy().as_ref());
+        }
+        if !tls.cert_file.as_os_str().is_empty() {
+            cfg.set(
+                "ssl.certificate.location",
+                tls.cert_file.to_string_lossy().as_ref(),
+            );
+        }
+        if !tls.key_file.as_os_str().is_empty() {
+            cfg.set("ssl.key.location", tls.key_file.to_string_lossy().as_ref());
         }
     }
 
