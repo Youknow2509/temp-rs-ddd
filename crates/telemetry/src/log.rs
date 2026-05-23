@@ -41,6 +41,7 @@ where
                     true,
                     std::io::stdout,
                     extra_fields,
+                    build_env_filter(&cfg.level),
                 ));
             }
             crate::constants::LOG_OUTPUT_STDERR => {
@@ -50,6 +51,7 @@ where
                     true,
                     std::io::stderr,
                     extra_fields,
+                    build_env_filter(&cfg.level),
                 ));
             }
             crate::constants::LOG_OUTPUT_FILE => {
@@ -79,6 +81,7 @@ where
                     false,
                     non_blocking,
                     extra_fields,
+                    build_env_filter(&cfg.level),
                 ));
             }
             other => {

@@ -1,6 +1,6 @@
 use tracing::Subscriber;
 use tracing_subscriber::{
-    Layer,
+    EnvFilter, Layer,
     fmt::{self, MakeWriter},
     registry::LookupSpan,
 };
@@ -13,6 +13,7 @@ pub(super) fn make_fmt_layer<S, W>(
     ansi: bool,
     writer: W,
     extra_fields: &[(&str, &str)],
+    level_filter: EnvFilter,
 ) -> Box<dyn Layer<S> + Send + Sync + 'static>
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
@@ -23,6 +24,7 @@ where
             .event_format(JsonWithStaticFields::new(extra_fields, caller))
             .with_ansi(false)
             .with_writer(writer)
+            .with_filter(level_filter)
             .boxed()
     } else if use_json {
         fmt::layer()
@@ -32,6 +34,7 @@ where
             .with_file(caller)
             .with_line_number(caller)
             .with_target(true)
+            .with_filter(level_filter)
             .boxed()
     } else {
         fmt::layer()
@@ -41,6 +44,7 @@ where
             .with_file(caller)
             .with_line_number(caller)
             .with_target(true)
+            .with_filter(level_filter)
             .boxed()
     }
 }

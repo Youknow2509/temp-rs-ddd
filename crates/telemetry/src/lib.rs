@@ -38,15 +38,13 @@ impl Drop for TelemetryGuard {
 }
 
 pub fn init(cfg: &TelemetrySystemSetting, extra_fields: &[(&str, &str)]) -> Result<TelemetryGuard> {
-    let filter = log::build_env_filter(&cfg.logger.level);
     let (fmt_layers, log_guard) =
         log::build_layers::<tracing_subscriber::Registry>(&cfg.logger, extra_fields)?;
     let trace_output = trace::build(&cfg.tracing)?;
     let metrics_handle = metric::build(&cfg.metrics)?;
 
     let mut all_layers: Vec<Box<dyn Layer<tracing_subscriber::Registry> + Send + Sync + 'static>> =
-        vec![filter.boxed()];
-    all_layers.extend(fmt_layers);
+        fmt_layers;
 
     let (tracer_provider, tokio_rt) = if let Some(output) = trace_output {
         all_layers.push(output.layer.boxed());
