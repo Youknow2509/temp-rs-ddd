@@ -36,5 +36,14 @@ pub async fn drain(wired: Wired) -> Result<()> {
     drop(wired.bootstrap.connections.grpc_clients);
     info!("gRPC clients closed");
 
+    // Drop DDD layers before telemetry so any cleanup logging is captured.
+    drop(wired.use_cases);
+    drop(wired.services);
+    drop(wired.repositories);
+
+    // Flush telemetry last: joins the file-appender thread (writing all buffered
+    // log lines above) and calls provider.shutdown() to export remaining OTEL spans.
+    drop(wired.bootstrap.telemetry_guard);
+
     Ok(())
 }
