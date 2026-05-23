@@ -24,8 +24,10 @@ pub async fn drain(wired: Wired, handles: RunHandles) -> Result<()> {
 
     // 2. Drop DDD layers — no new database / cache calls from here on.
     //    Dropping repositories also drops RedisCache → RedisPool (close via Drop).
-    drop(wired.use_cases);
-    drop(wired.services);
+
+    // TODO: drop it when implement logic
+    // drop(wired.use_cases);
+    // drop(wired.services);
     drop(wired.repositories);
     info!("DDD layers stopped; Redis pool closed");
 

@@ -10,6 +10,7 @@ use infrastructure::cache::{MokaCache, RedisCache};
 use infrastructure::connection::RedisPool;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Repositories<A: LocalCache, B: DistributedCache> {
     pub local_cache: Arc<A>,
     pub distributed_cache: Arc<B>,
