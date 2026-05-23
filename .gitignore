@@ -10,5 +10,15 @@
 **/.env_*
 
 # Rust target directory
-target/
-**/target/
+target/**
+**/target/**
+
+# Agent folder
+.claude/**
+.codex/**
+.serena/**
+docs/superpowers/**
+
+# Config files
+config/**
+!config/default.toml

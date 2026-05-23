@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "crates/cli",
     "crates/telemetry",
@@ -77,3 +77,9 @@ print_stderr = "warn"
 dbg_macro = "warn"
 todo = "warn"
 unimplemented = "warn"
+
+[workspace.dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+config = { version = "0.14", default-features = false, features = ["toml"] }
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }

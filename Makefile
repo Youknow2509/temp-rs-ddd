@@ -9,6 +9,7 @@ BIN   := cli
 # ===
 .DEFAULT_GOAL := help
 .PHONY: help dev run build check fmt lint test clean \
+        dev-cron run-cron \
         db-up db-down db-migrate db-reset \
         docker-build setup
 
@@ -16,11 +17,17 @@ BIN   := cli
 # Development
 # ===
 
-dev: ## Run server with hot reload
-	$(CARGO) watch -c -x "run -p $(BIN) -- serve"
+dev: ## Run server with hot reload (APP_MODE=development)
+	APP_MODE=development $(CARGO) watch -c -x "run -p $(BIN) -- serve"
 
-run: ## Run server
+run: ## Run server (uses default APP_MODE=production)
 	$(CARGO) run -p $(BIN) -- serve
+
+dev-cron: ## Run cronjob with hot reload (APP_MODE=development)
+	APP_MODE=development $(CARGO) watch -c -x "run -p $(BIN) -- cronjob"
+
+run-cron: ## Run cronjob (uses default APP_MODE=production)
+	$(CARGO) run -p $(BIN) -- cronjob
 
 build: ## Build release binary
 	$(CARGO) build -p $(BIN) --release
