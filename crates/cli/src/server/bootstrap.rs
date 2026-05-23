@@ -1,27 +1,35 @@
-//! Phase 1: load config, init logger, open connection pools.
+//! Phase 1: load config, init telemetry, open connection pools.
 
 pub mod config;
 pub mod connections;
-pub mod logger;
-
-use anyhow::Result;
-
-use domain::config::SystemConfig;
+pub mod telemetry;
 
 use self::connections::Connections;
-
+use self::telemetry::TelemetryGuard;
+use anyhow::Result;
+use domain::config::SystemConfig;
+use tracing::{info};
 /// Output of the bootstrap phase. Consumed by `wiring` to build the
 /// repositories / services / use cases on top of these primitives.
 #[derive(Debug)]
-#[allow(dead_code)] // fields consumed once real adapters land
+#[allow(dead_code)]
 pub struct Bootstrap {
     pub config: SystemConfig,
     pub connections: Connections,
+    pub telemetry_guard: TelemetryGuard,
 }
 
 pub fn init() -> Result<Bootstrap> {
     let config = config::load()?;
-    logger::init(&config)?;
+    let telemetry_guard = self::telemetry::init(&config)?;
+    info!("Config loaded, telemetry initialized");
+
     let connections = connections::init(&config)?;
-    Ok(Bootstrap { config, connections })
+    info!("Connection pools initialized");
+    
+    Ok(Bootstrap {
+        config,
+        connections,
+        telemetry_guard,
+    })
 }

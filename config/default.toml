@@ -691,3 +691,52 @@ min_version         = "TLS1.3"
 
 [clients.grpc_clients.services."billing-service".auth]
 scheme = "mtls"
+
+# ===
+# telemetry — logger, metrics, tracing
+# ===
+
+# --- Logger ---
+[telemetry.logger]
+level            = "info" # trace | debug | info | warn | error
+format           = ["json"] # json | console
+output           = ["stdout", "file"]  # stdout | stderr | file
+caller           = true
+stacktrace_level = "error" # trace | debug | info | warn | error
+
+[telemetry.logger.file]
+enabled      = true
+folder       = "logs"
+filename     = "app.log"
+max_size_mb  = 100
+max_backups  = 7
+max_age_days = 30
+compress     = true
+
+# --- Metrics ---
+[telemetry.metrics]
+enabled               = true
+path                  = "/metrics"
+port                  = 9091
+host                  = "0.0.0.0"
+namespace             = "temp_rs_ddd"
+collect_interval_secs = 15
+
+# --- Tracing ---
+[telemetry.tracing]
+enabled         = false
+service_name    = "temp-rs-ddd"
+service_version = "0.1.0"
+otlp_endpoint   = "http://127.0.0.1:4317"
+protocol        = "grpc"                       # grpc | http
+sampling_ratio  = 1.0
+propagation     = ["tracecontext", "baggage"]  # tracecontext | baggage | jaeger
+
+[telemetry.tracing.batch]
+max_queue_size        = 2048
+max_export_batch_size = 512
+schedule_delay_ms     = 5000
+export_timeout_ms     = 30000
+
+[telemetry.tracing.headers]
+# "x-api-key" = ""

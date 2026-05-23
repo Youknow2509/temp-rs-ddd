@@ -1,4 +1,7 @@
-use super::{ClientSystemSetting, InterfacesSystemSetting, RepositorySystemSetting, SystemSetting};
+use super::{
+    ClientSystemSetting, InterfacesSystemSetting, RepositorySystemSetting, SystemSetting,
+    TelemetrySystemSetting,
+};
 use serde::Deserialize;
 
 /// Config struct for system
@@ -9,4 +12,11 @@ pub struct SystemConfig {
     interfaces: InterfacesSystemSetting,
     repository: RepositorySystemSetting,
     clients: ClientSystemSetting,
+    telemetry: TelemetrySystemSetting,
+}
+
+impl SystemConfig {
+    pub fn telemetry(&self) -> &TelemetrySystemSetting {
+        &self.telemetry
+    }
 }

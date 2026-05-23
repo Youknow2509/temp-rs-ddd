@@ -22,3 +22,8 @@ docs/superpowers/**
 # Config files
 config/**
 !config/default.toml
+
+# Logs
+logs/**
+**/logs/**
+**/*.log.*

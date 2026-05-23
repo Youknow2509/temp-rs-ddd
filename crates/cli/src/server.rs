@@ -17,7 +17,7 @@ pub struct Server {
 }
 
 impl Server {
-    /// Phase 1 — load config, init logger, open connection pools.
+    /// Phase 1 — load config, init telemetry, open connection pools.
     pub fn bootstrap() -> Result<Self> {
         let bootstrap = bootstrap::init()?;
         Ok(Self { bootstrap })
