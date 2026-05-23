@@ -15,7 +15,6 @@ pub struct TelemetrySystemSetting {
 #[allow(unused)]
 pub struct LoggerSetting {
     pub level: String,
-    pub format: Vec<String>,
     pub output: Vec<String>,
     pub caller: bool,
     pub stacktrace_level: String,

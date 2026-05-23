@@ -614,7 +614,6 @@ token  = ""
 # --- Logger ---
 [telemetry.logger]
 level            = "info" # trace | debug | info | warn | error
-format           = ["json"] # json | console
 output           = ["stdout", "file"]  # stdout | stderr | file
 caller           = true
 stacktrace_level = "error" # trace | debug | info | warn | error

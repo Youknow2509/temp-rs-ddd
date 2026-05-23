@@ -29,10 +29,6 @@ where
         );
     }
 
-    let use_json = cfg
-        .format
-        .iter()
-        .any(|f| f == crate::constants::LOG_FORMAT_JSON);
     let mut layers: Vec<Box<dyn Layer<S> + Send + Sync + 'static>> = Vec::new();
     let mut worker_guard: Option<WorkerGuard> = None;
 
@@ -40,7 +36,7 @@ where
         match output.as_str() {
             crate::constants::LOG_OUTPUT_STDOUT => {
                 layers.push(fmt::make_fmt_layer::<S, _>(
-                    use_json,
+                    false,
                     cfg.caller,
                     true,
                     std::io::stdout,
@@ -49,7 +45,7 @@ where
             }
             crate::constants::LOG_OUTPUT_STDERR => {
                 layers.push(fmt::make_fmt_layer::<S, _>(
-                    use_json,
+                    false,
                     cfg.caller,
                     true,
                     std::io::stderr,
@@ -78,7 +74,7 @@ where
                 let (non_blocking, guard) = tracing_appender::non_blocking(appender);
                 worker_guard = Some(guard);
                 layers.push(fmt::make_fmt_layer::<S, _>(
-                    use_json,
+                    true,
                     cfg.caller,
                     false,
                     non_blocking,
@@ -111,10 +107,9 @@ mod tests {
         }
     }
 
-    fn logger_cfg(format: &str, output: &str, file_enabled: bool) -> LoggerSetting {
+    fn logger_cfg(output: &str, file_enabled: bool) -> LoggerSetting {
         LoggerSetting {
             level: "info".into(),
-            format: vec![format.into()],
             output: vec![output.into()],
             caller: false,
             stacktrace_level: "error".into(),
@@ -129,12 +124,8 @@ mod tests {
     }
 
     #[test]
-    fn json_stdout_layer_builds() {
-        let cfg = logger_cfg(
-            crate::constants::LOG_FORMAT_JSON,
-            crate::constants::LOG_OUTPUT_STDOUT,
-            false,
-        );
+    fn stdout_layer_builds() {
+        let cfg = logger_cfg(crate::constants::LOG_OUTPUT_STDOUT, false);
         let result = build_layers::<tracing_subscriber::Registry>(&cfg, &[]);
         assert!(result.is_ok());
         let (layers, guard) = result.unwrap();
@@ -143,23 +134,8 @@ mod tests {
     }
 
     #[test]
-    fn console_stdout_layer_builds() {
-        let cfg = logger_cfg(
-            crate::constants::LOG_FORMAT_CONSOLE,
-            crate::constants::LOG_OUTPUT_STDOUT,
-            false,
-        );
-        let result = build_layers::<tracing_subscriber::Registry>(&cfg, &[]);
-        assert!(result.is_ok());
-    }
-
-    #[test]
     fn file_output_returns_guard() {
-        let cfg = logger_cfg(
-            crate::constants::LOG_FORMAT_JSON,
-            crate::constants::LOG_OUTPUT_FILE,
-            true,
-        );
+        let cfg = logger_cfg(crate::constants::LOG_OUTPUT_FILE, true);
         let result = build_layers::<tracing_subscriber::Registry>(&cfg, &[]);
         assert!(result.is_ok());
         let (layers, guard) = result.unwrap();
@@ -169,11 +145,7 @@ mod tests {
 
     #[test]
     fn stderr_output_builds() {
-        let cfg = logger_cfg(
-            crate::constants::LOG_FORMAT_JSON,
-            crate::constants::LOG_OUTPUT_STDERR,
-            false,
-        );
+        let cfg = logger_cfg(crate::constants::LOG_OUTPUT_STDERR, false);
         let (layers, guard) = build_layers::<tracing_subscriber::Registry>(&cfg, &[]).unwrap();
         assert_eq!(layers.len(), 1);
         assert!(guard.is_none());
@@ -182,11 +154,7 @@ mod tests {
     #[test]
     fn file_output_disabled_flag_produces_no_layer() {
         // output list contains "file" but file.enabled = false → skip silently
-        let cfg = logger_cfg(
-            crate::constants::LOG_FORMAT_JSON,
-            crate::constants::LOG_OUTPUT_FILE,
-            false,
-        );
+        let cfg = logger_cfg(crate::constants::LOG_OUTPUT_FILE, false);
         let (layers, guard) = build_layers::<tracing_subscriber::Registry>(&cfg, &[]).unwrap();
         assert!(layers.is_empty());
         assert!(guard.is_none());
@@ -194,7 +162,7 @@ mod tests {
 
     #[test]
     fn unknown_output_produces_no_layer() {
-        let cfg = logger_cfg(crate::constants::LOG_FORMAT_JSON, "syslog", false);
+        let cfg = logger_cfg("syslog", false);
         let (layers, _) = build_layers::<tracing_subscriber::Registry>(&cfg, &[]).unwrap();
         assert!(layers.is_empty());
     }
@@ -209,7 +177,6 @@ mod tests {
     fn multiple_outputs_build_multiple_layers() {
         let cfg = LoggerSetting {
             level: "info".into(),
-            format: vec![crate::constants::LOG_FORMAT_JSON.into()],
             output: vec![
                 crate::constants::LOG_OUTPUT_STDOUT.into(),
                 crate::constants::LOG_OUTPUT_STDERR.into(),

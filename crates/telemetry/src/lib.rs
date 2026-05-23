@@ -79,7 +79,6 @@ mod tests {
         TelemetrySystemSetting {
             logger: LoggerSetting {
                 level: "info".into(),
-                format: vec!["console".into()],
                 output: vec!["stdout".into()],
                 caller: false,
                 stacktrace_level: "error".into(),
