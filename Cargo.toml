@@ -90,3 +90,6 @@ tokio-postgres      = "0.7"
 deadpool-postgres   = { version = "0.14", features = ["rt_tokio_1"] }
 postgres-native-tls = "0.5"
 native-tls          = "0.2"
+
+redis        = { version = "0.27", features = ["tokio-comp", "sentinel", "cluster-async"] }
+deadpool-redis = { version = "0.18", features = ["rt_tokio_1", "cluster"] }

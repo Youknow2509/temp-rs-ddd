@@ -15,5 +15,8 @@ deadpool-postgres.workspace   = true
 postgres-native-tls.workspace = true
 native-tls.workspace          = true
 
+redis.workspace        = true
+deadpool-redis.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }

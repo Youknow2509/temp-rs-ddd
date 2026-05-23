@@ -4,8 +4,10 @@ use anyhow::{Context, Result};
 
 use domain::config::SystemConfig;
 use infrastructure::connection::PgPool;
+use infrastructure::connection::RedisPool;
 use infrastructure::connection::postgres_conn;
-use tracing::{info};
+use infrastructure::connection::redis_conn;
+use tracing::info;
 
 /// Aggregates every connection pool / client the application depends on.
 /// Each field is built once at boot and shared (typically via `Arc`) into
@@ -13,6 +15,7 @@ use tracing::{info};
 #[derive(Debug)]
 pub struct Connections {
     pub pg_pool: PgPool,
+    pub redis_pool: RedisPool,
 }
 
 pub fn init(config: &SystemConfig) -> Result<Connections> {
@@ -20,5 +23,12 @@ pub fn init(config: &SystemConfig) -> Result<Connections> {
         .context("initialising PostgreSQL pool")?;
     info!("PostgreSQL connection pool initialised");
 
-    Ok(Connections { pg_pool })
+    let redis_pool = redis_conn::create_pool(&config.repository.redis)
+        .context("initialising Redis pool")?;
+    info!("Redis connection pool initialised");
+
+    Ok(Connections {
+        pg_pool,
+        redis_pool,
+    })
 }

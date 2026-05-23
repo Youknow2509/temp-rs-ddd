@@ -5,6 +5,8 @@ pub mod signal;
 use anyhow::Result;
 use tracing::info;
 
+use infrastructure::connection::redis_conn::RedisPool;
+
 use super::wiring::Wired;
 
 /// Block until SIGINT / SIGTERM, then close all connection pools.
@@ -15,6 +17,12 @@ pub fn drain(wired: Wired) -> Result<()> {
 
     wired.bootstrap.connections.pg_pool.close();
     info!("PostgreSQL pool closed");
+
+    match &wired.bootstrap.connections.redis_pool {
+        RedisPool::Single(p) => p.close(),
+        RedisPool::Cluster(p) => p.close(),
+    }
+    info!("Redis pool closed");
 
     Ok(())
 }
