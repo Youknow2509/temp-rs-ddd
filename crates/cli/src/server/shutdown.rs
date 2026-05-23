@@ -33,5 +33,8 @@ pub async fn drain(wired: Wired) -> Result<()> {
     drop(wired.bootstrap.connections.kafka_client);
     info!("Kafka client closed");
 
+    drop(wired.bootstrap.connections.grpc_clients);
+    info!("gRPC clients closed");
+
     Ok(())
 }
