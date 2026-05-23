@@ -27,10 +27,10 @@ impl std::fmt::Debug for TelemetryGuard {
 
 impl Drop for TelemetryGuard {
     fn drop(&mut self) {
-        if let Some(provider) = self._tracer_provider.take() {
-            if let Err(e) = provider.shutdown() {
-                eprintln!("OTEL tracer provider shutdown error: {e}");
-            }
+        if let Some(provider) = self._tracer_provider.take()
+            && let Err(e) = provider.shutdown()
+        {
+            eprintln!("OTEL tracer provider shutdown error: {e}");
         }
         self._tokio_rt.take();
         // _log_guard drops last — joins the file-appender thread.

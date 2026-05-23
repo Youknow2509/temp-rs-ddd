@@ -8,6 +8,8 @@ use tracing_subscriber::{EnvFilter, Layer, registry::LookupSpan};
 
 use domain::config::LoggerSetting;
 
+type LogLayers<S> = Vec<Box<dyn Layer<S> + Send + Sync + 'static>>;
+
 pub fn build_env_filter(level: &str) -> EnvFilter {
     EnvFilter::try_new(level).unwrap_or_else(|_| EnvFilter::new("info"))
 }
@@ -15,10 +17,7 @@ pub fn build_env_filter(level: &str) -> EnvFilter {
 pub fn build_layers<S>(
     cfg: &LoggerSetting,
     extra_fields: &[(&str, &str)],
-) -> Result<(
-    Vec<Box<dyn Layer<S> + Send + Sync + 'static>>,
-    Option<WorkerGuard>,
-)>
+) -> Result<(LogLayers<S>, Option<WorkerGuard>)>
 where
     S: Subscriber + for<'a> LookupSpan<'a>,
 {
