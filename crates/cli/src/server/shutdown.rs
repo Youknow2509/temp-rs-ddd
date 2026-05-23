@@ -9,9 +9,9 @@ use infrastructure::connection::redis_conn::RedisPool;
 
 use super::wiring::Wired;
 
-/// Block until SIGINT / SIGTERM, then close all connection pools.
-pub fn drain(wired: Wired) -> Result<()> {
-    signal::wait()?;
+/// Await SIGINT / SIGTERM, then close all connection pools.
+pub async fn drain(wired: Wired) -> Result<()> {
+    signal::wait().await?;
 
     info!("shutdown signal received — draining connections");
 
@@ -29,6 +29,9 @@ pub fn drain(wired: Wired) -> Result<()> {
 
     drop(wired.bootstrap.connections.s3_client);
     info!("S3 client closed");
+
+    drop(wired.bootstrap.connections.kafka_client);
+    info!("Kafka client closed");
 
     Ok(())
 }

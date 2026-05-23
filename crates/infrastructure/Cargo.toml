@@ -24,5 +24,7 @@ openssl.workspace = true
 aws-sdk-s3.workspace           = true
 aws-credential-types.workspace = true
 
+rdkafka.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }

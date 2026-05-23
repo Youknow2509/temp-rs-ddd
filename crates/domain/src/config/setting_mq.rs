@@ -53,8 +53,6 @@ pub struct KafkaConnectionTimeoutSetting {
     /// Milliseconds
     pub request_timeout_ms: u64,
     /// Milliseconds
-    pub metadata_timeout_ms: u64,
-    /// Milliseconds
     pub socket_timeout_ms: u64,
 }
 
@@ -135,9 +133,6 @@ pub struct KafkaConsumerSetting {
     // Group
     pub group: KafkaConsumerGroupSetting,
 
-    // Topics
-    pub subscription: KafkaConsumerSubscriptionSetting,
-
     // Offset
     pub offset: KafkaConsumerOffsetSetting,
 
@@ -157,14 +152,6 @@ pub struct KafkaConsumerSetting {
 pub struct KafkaConsumerGroupSetting {
     pub group_id: String,
     pub group_instance_id: Option<String>,
-}
-
-/// Consumer topic subscription
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub struct KafkaConsumerSubscriptionSetting {
-    pub topics: Vec<String>,
-    pub topic_pattern: Option<String>,
 }
 
 /// Consumer offset management

@@ -1,6 +1,7 @@
+use std::collections::HashMap;
+
 use super::{KafkaConnectionSetting, KafkaProducerSetting, TLSSetting};
 use serde::Deserialize;
-use std::collections::HashMap;
 
 /// Outbound clients: things this service calls / publishes to.
 #[derive(Debug, Deserialize)]
@@ -22,33 +23,14 @@ pub struct ClientSystemSetting {
 /// Connection is duplicated from the consumer side because publish-side
 /// clusters / credentials are commonly different from the consume-side
 /// cluster (e.g. dedicated egress cluster, different SASL principal).
+///
+/// Topic names are defined as constants in `infrastructure::connection::kafka_topics`
+/// and are not configured here — only infra knobs (brokers, auth, timeouts) belong.
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct KafkaPublisherSetting {
     pub connection: KafkaConnectionSetting,
     pub producer: KafkaProducerSetting,
-
-    /// Default topic when caller does not specify one (optional).
-    pub default_topic: Option<String>,
-
-    /// Per-topic overrides (e.g. different acks / linger per topic).
-    pub topics: HashMap<String, KafkaPublisherTopicSetting>,
-}
-
-/// Per-topic publisher overrides.
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub struct KafkaPublisherTopicSetting {
-    /// Override acks for this topic ("0" | "1" | "all")
-    pub acks: Option<String>,
-    /// Override compression for this topic
-    pub compression_type: Option<String>,
-    /// Milliseconds — override linger
-    pub linger_ms: Option<u64>,
-    /// Override batch size
-    pub batch_size: Option<usize>,
-    /// Override partitioner
-    pub partitioner: Option<String>,
 }
 
 // ===

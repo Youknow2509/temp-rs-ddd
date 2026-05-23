@@ -1,17 +1,8 @@
-//! OS-signal handling — block until SIGINT or SIGTERM fires.
+//! OS-signal handling — await SIGINT or SIGTERM.
 
 use anyhow::{Context, Result};
 
-pub fn wait() -> Result<()> {
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .context("building signal-listener runtime")?;
-
-    rt.block_on(wait_async())
-}
-
-async fn wait_async() -> Result<()> {
+pub async fn wait() -> Result<()> {
     #[cfg(unix)]
     {
         use tokio::signal::unix::{SignalKind, signal};

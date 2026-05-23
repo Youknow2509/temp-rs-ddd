@@ -8,7 +8,8 @@ use self::connections::Connections;
 use self::telemetry::TelemetryGuard;
 use anyhow::Result;
 use domain::config::SystemConfig;
-use tracing::{info};
+use tracing::info;
+
 /// Output of the bootstrap phase. Consumed by `wiring` to build the
 /// repositories / services / use cases on top of these primitives.
 #[derive(Debug)]
@@ -19,14 +20,14 @@ pub struct Bootstrap {
     pub telemetry_guard: TelemetryGuard,
 }
 
-pub fn init() -> Result<Bootstrap> {
+pub async fn init() -> Result<Bootstrap> {
     let config = config::load()?;
     let telemetry_guard = self::telemetry::init(&config)?;
     info!("Config loaded, telemetry initialized");
 
-    let connections = connections::init(&config)?;
+    let connections = connections::init(&config).await?;
     info!("Connection pools initialized");
-    
+
     Ok(Bootstrap {
         config,
         connections,

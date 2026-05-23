@@ -9,25 +9,14 @@ pub mod wiring;
 
 use anyhow::Result;
 
-use self::bootstrap::Bootstrap;
-
-#[derive(Debug)]
-pub struct Server {
-    bootstrap: Bootstrap,
-}
+pub struct Server;
 
 impl Server {
-    /// Phase 1 — load config, init telemetry, open connection pools.
-    pub fn bootstrap() -> Result<Self> {
-        let bootstrap = bootstrap::init()?;
-        Ok(Self { bootstrap })
-    }
-
-    /// Phase 2 -> 3 -> 4 — wire DDD layers, start interfaces, wait for shutdown.
-    pub fn run(self) -> Result<()> {
-        let wired = wiring::wire(self.bootstrap)?;
+    /// All four lifecycle phases under the caller's Tokio runtime.
+    pub async fn run() -> Result<()> {
+        let bootstrap = bootstrap::init().await?;
+        let wired = wiring::wire(bootstrap)?;
         run::start(&wired)?;
-        shutdown::drain(wired)?;
-        Ok(())
+        shutdown::drain(wired).await
     }
 }

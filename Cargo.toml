@@ -99,3 +99,5 @@ openssl = { version = "0.10", features = ["v102", "v110"] }
 
 aws-sdk-s3          = { version = "1", features = ["behavior-version-latest"] }
 aws-credential-types = { version = "1", features = ["hardcoded-credentials"] }
+
+rdkafka = { version = "0.36", features = ["tokio", "ssl"] }

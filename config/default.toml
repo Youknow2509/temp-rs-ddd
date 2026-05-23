@@ -189,10 +189,6 @@ min_version         = "TLS1.2"
 group_id = "temp-rs-ddd"
 # group_instance_id = "instance-0"
 
-[interfaces.kafka_consumer.subscription]
-topics = ["events.user", "events.billing"]
-# topic_pattern = "^events\\..*$"
-
 [interfaces.kafka_consumer.offset]
 auto_offset_reset        = "latest"   # earliest | latest | none
 enable_auto_commit       = false
@@ -427,9 +423,7 @@ tracing_enabled = false
 # ===
 
 # --- Kafka publisher ---
-[clients.kafka_publisher]
-default_topic = "events.outbox"
-
+# Topic names are code constants (infrastructure::connection::kafka_topics) — not configured here.
 [clients.kafka_publisher.connection.cluster]
 brokers   = ["127.0.0.1:9092"]
 client_id = "temp-rs-ddd-publisher"
@@ -437,7 +431,6 @@ client_id = "temp-rs-ddd-publisher"
 [clients.kafka_publisher.connection.timeouts]
 connection_timeout_ms = 10000
 request_timeout_ms    = 30000
-metadata_timeout_ms   = 60000
 socket_timeout_ms     = 60000
 
 [clients.kafka_publisher.connection.retry]
@@ -477,16 +470,6 @@ max_request_size = 1048576
 # [clients.kafka_publisher.producer.transaction]
 # transactional_id       = "temp-rs-ddd-tx"
 # transaction_timeout_ms = 60000
-
-[clients.kafka_publisher.topics."events.audit"]
-acks             = "all"
-compression_type = "zstd"
-linger_ms        = 50
-batch_size       = 65536
-
-[clients.kafka_publisher.topics."events.metrics"]
-acks      = "1"
-linger_ms = 100
 
 # --- gRPC clients (internal services) ---
 

@@ -5,7 +5,6 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 use cronjob::Cronjob;
-use server::Server;
 
 #[derive(Debug, Parser)]
 #[command(name = "cli", version, about = "temp-rs-ddd entry point")]
@@ -24,7 +23,11 @@ enum Command {
 
 fn main() -> Result<()> {
     match Cli::parse().command {
-        Command::Serve => Server::bootstrap()?.run(),
+        Command::Serve => tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .thread_name("app-worker")
+            .build()?
+            .block_on(server::Server::run()),
         Command::Cronjob => Cronjob::bootstrap()?.run(),
     }
 }
