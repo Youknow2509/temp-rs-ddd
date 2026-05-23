@@ -5,8 +5,10 @@ use anyhow::{Context, Result};
 use domain::config::SystemConfig;
 use infrastructure::connection::PgPool;
 use infrastructure::connection::RedisPool;
+use infrastructure::connection::ScyllaSession;
 use infrastructure::connection::postgres_conn;
 use infrastructure::connection::redis_conn;
+use infrastructure::connection::scylla_conn;
 use tracing::info;
 
 /// Aggregates every connection pool / client the application depends on.
@@ -16,6 +18,7 @@ use tracing::info;
 pub struct Connections {
     pub pg_pool: PgPool,
     pub redis_pool: RedisPool,
+    pub scylla_session: ScyllaSession,
 }
 
 pub fn init(config: &SystemConfig) -> Result<Connections> {
@@ -27,8 +30,13 @@ pub fn init(config: &SystemConfig) -> Result<Connections> {
         .context("initialising Redis pool")?;
     info!("Redis connection pool initialised");
 
+    let scylla_session = scylla_conn::create_session(&config.repository.scylladb)
+        .context("initialising ScyllaDB session")?;
+    info!("ScyllaDB session initialised");
+
     Ok(Connections {
         pg_pool,
         redis_pool,
+        scylla_session,
     })
 }

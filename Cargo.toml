@@ -93,3 +93,6 @@ native-tls          = "0.2"
 
 redis        = { version = "0.27", features = ["tokio-comp", "sentinel", "cluster-async"] }
 deadpool-redis = { version = "0.18", features = ["rt_tokio_1", "cluster"] }
+
+scylla  = { version = "0.14", features = ["ssl"] }
+openssl = { version = "0.10", features = ["v102", "v110"] }

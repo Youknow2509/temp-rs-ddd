@@ -24,5 +24,8 @@ pub fn drain(wired: Wired) -> Result<()> {
     }
     info!("Redis pool closed");
 
+    drop(wired.bootstrap.connections.scylla_session);
+    info!("ScyllaDB session closed");
+
     Ok(())
 }

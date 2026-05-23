@@ -18,5 +18,8 @@ native-tls.workspace          = true
 redis.workspace        = true
 deadpool-redis.workspace = true
 
+scylla.workspace  = true
+openssl.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }
