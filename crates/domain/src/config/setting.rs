@@ -6,22 +6,22 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct SystemSetting {
-    name: String,
-    version: String,
-    region: String,
-    shard_id: String,
-    timezone: String,
-    mode: String,
+    pub name: String,
+    pub version: String,
+    pub region: String,
+    pub shard_id: String,
+    pub timezone: String,
+    pub mode: String,
 }
 
 /// --- TLS Setting (shared) ---
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct TLSSetting {
-    is_enabled: bool,
-    cert_file: PathBuf,
-    key_file: PathBuf,
-    client_ca_file: Option<PathBuf>,
-    require_client_cert: bool,
-    min_version: String,
+    pub is_enabled: bool,
+    pub cert_file: PathBuf,
+    pub key_file: PathBuf,
+    pub client_ca_file: Option<PathBuf>,
+    pub require_client_cert: bool,
+    pub min_version: String,
 }

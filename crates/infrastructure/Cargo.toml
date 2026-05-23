@@ -4,9 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow.workspace = true
-config.workspace = true
-serde.workspace = true
+anyhow.workspace     = true
+config.workspace     = true
+serde.workspace      = true
+tokio.workspace      = true
+tracing.workspace    = true
+
+tokio-postgres.workspace      = true
+deadpool-postgres.workspace   = true
+postgres-native-tls.workspace = true
+native-tls.workspace          = true
 
 domain = { path = "../domain" }
 shared = { path = "../shared" }

@@ -8,11 +8,11 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct SystemConfig {
-    system: SystemSetting,
-    interfaces: InterfacesSystemSetting,
-    repository: RepositorySystemSetting,
-    clients: ClientSystemSetting,
-    telemetry: TelemetrySystemSetting,
+    pub system: SystemSetting,
+    pub interfaces: InterfacesSystemSetting,
+    pub repository: RepositorySystemSetting,
+    pub clients: ClientSystemSetting,
+    pub telemetry: TelemetrySystemSetting,
 }
 
 impl SystemConfig {

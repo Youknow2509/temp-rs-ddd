@@ -84,4 +84,9 @@ config = { version = "0.15.23", default-features = false, features = ["toml"] }
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 tracing = "0.1"
-tokio   = { version = "1", features = ["rt-multi-thread", "time"] }
+tokio   = { version = "1", features = ["rt-multi-thread", "time", "signal", "macros"] }
+
+tokio-postgres      = "0.7"
+deadpool-postgres   = { version = "0.14", features = ["rt_tokio_1"] }
+postgres-native-tls = "0.5"
+native-tls          = "0.2"

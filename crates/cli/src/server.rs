@@ -27,7 +27,7 @@ impl Server {
     pub fn run(self) -> Result<()> {
         let wired = wiring::wire(self.bootstrap)?;
         run::start(&wired)?;
-        shutdown::wait()?;
+        shutdown::drain(wired)?;
         Ok(())
     }
 }

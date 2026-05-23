@@ -1,10 +1,39 @@
-//! OS-signal handling — block until the user/orchestrator asks us to stop.
+//! OS-signal handling — block until SIGINT or SIGTERM fires.
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 pub fn wait() -> Result<()> {
-    // TODO: install handlers for SIGINT + SIGTERM (e.g. `tokio::signal`)
-    // and block until either fires.
-    println!("[shutdown::signal] (stub) would block on Ctrl-C / SIGTERM");
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .context("building signal-listener runtime")?;
+
+    rt.block_on(wait_async())
+}
+
+async fn wait_async() -> Result<()> {
+    #[cfg(unix)]
+    {
+        use tokio::signal::unix::{SignalKind, signal};
+
+        let mut sigint =
+            signal(SignalKind::interrupt()).context("registering SIGINT handler")?;
+        let mut sigterm =
+            signal(SignalKind::terminate()).context("registering SIGTERM handler")?;
+
+        tokio::select! {
+            _ = sigint.recv()  => tracing::info!("received SIGINT"),
+            _ = sigterm.recv() => tracing::info!("received SIGTERM"),
+        }
+    }
+
+    #[cfg(not(unix))]
+    {
+        tokio::signal::ctrl_c()
+            .await
+            .context("registering Ctrl-C handler")?;
+        tracing::info!("received Ctrl-C");
+    }
+
     Ok(())
 }

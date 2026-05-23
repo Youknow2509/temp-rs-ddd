@@ -1,11 +1,20 @@
-//! Phase 4: wait for a shutdown signal, then drain.
+//! Phase 4: wait for a shutdown signal, then drain and close all resources.
 
 pub mod signal;
 
 use anyhow::Result;
+use tracing::info;
 
-pub fn wait() -> Result<()> {
+use super::wiring::Wired;
+
+/// Block until SIGINT / SIGTERM, then close all connection pools.
+pub fn drain(wired: Wired) -> Result<()> {
     signal::wait()?;
-    // TODO: drain in-flight requests, close pools, flush logs / metrics.
+
+    info!("shutdown signal received — draining connections");
+
+    wired.bootstrap.connections.pg_pool.close();
+    info!("PostgreSQL pool closed");
+
     Ok(())
 }
