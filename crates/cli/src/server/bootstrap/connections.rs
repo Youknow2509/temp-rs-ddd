@@ -5,9 +5,11 @@ use anyhow::{Context, Result};
 use domain::config::SystemConfig;
 use infrastructure::connection::PgPool;
 use infrastructure::connection::RedisPool;
+use infrastructure::connection::S3Client;
 use infrastructure::connection::ScyllaSession;
 use infrastructure::connection::postgres_conn;
 use infrastructure::connection::redis_conn;
+use infrastructure::connection::s3_conn;
 use infrastructure::connection::scylla_conn;
 use tracing::info;
 
@@ -19,6 +21,7 @@ pub struct Connections {
     pub pg_pool: PgPool,
     pub redis_pool: RedisPool,
     pub scylla_session: ScyllaSession,
+    pub s3_client: S3Client,
 }
 
 pub fn init(config: &SystemConfig) -> Result<Connections> {
@@ -34,9 +37,14 @@ pub fn init(config: &SystemConfig) -> Result<Connections> {
         .context("initialising ScyllaDB session")?;
     info!("ScyllaDB session initialised");
 
+    let s3_client = s3_conn::create_client(&config.repository.object_storage)
+        .context("initialising S3 client")?;
+    info!("S3 client initialised");
+
     Ok(Connections {
         pg_pool,
         redis_pool,
         scylla_session,
+        s3_client,
     })
 }

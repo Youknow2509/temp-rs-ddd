@@ -27,5 +27,8 @@ pub fn drain(wired: Wired) -> Result<()> {
     drop(wired.bootstrap.connections.scylla_session);
     info!("ScyllaDB session closed");
 
+    drop(wired.bootstrap.connections.s3_client);
+    info!("S3 client closed");
+
     Ok(())
 }

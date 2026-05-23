@@ -21,5 +21,8 @@ deadpool-redis.workspace = true
 scylla.workspace  = true
 openssl.workspace = true
 
+aws-sdk-s3.workspace           = true
+aws-credential-types.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }
