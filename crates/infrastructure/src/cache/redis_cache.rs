@@ -45,7 +45,7 @@ fn de<V: DeserializeOwned>(bytes: &[u8]) -> Result<V, RedisCacheError> {
 
 // ── RedisCache ────────────────────────────────────────────────────────────────
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RedisCache {
     pool: RedisPool,
 }

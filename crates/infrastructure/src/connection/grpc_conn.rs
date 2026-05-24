@@ -13,7 +13,7 @@ use domain::config::{GrpcClientSetting, GrpcClientsSetting};
 /// A map of logical service name → gRPC `Channel`.
 ///
 /// `Channel` is `Clone + Send + Sync` with an `Arc` inside — cloning is cheap.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GrpcClients {
     channels: HashMap<String, Channel>,
 }

@@ -1,69 +1,45 @@
-//! Long-lived connection pools owned for the lifetime of the process.
-
-use std::sync::Arc;
+//! Initialise every connection pool / client once at boot.
+//!
+//! Returns `infrastructure::Connections` — the single source of truth for
+//! all long-lived handles.  The caller wraps it in `Arc` so every interface
+//! can clone the pointer without copying any connection data.
 
 use anyhow::{Context, Result};
-
-use domain::config::SystemConfig;
-use infrastructure::connection::GrpcClients;
-use infrastructure::connection::KafkaClient;
-use infrastructure::connection::PgPool;
-use infrastructure::connection::RedisPool;
-use infrastructure::connection::S3Client;
-use infrastructure::connection::ScyllaSession;
-use infrastructure::connection::grpc_conn;
-use infrastructure::connection::kafka_conn;
-use infrastructure::connection::postgres_conn;
-use infrastructure::connection::redis_conn;
-use infrastructure::connection::s3_conn;
-use infrastructure::connection::scylla_conn;
 use tracing::info;
 
-/// Aggregates every connection pool / client the application depends on.
-/// Each field is built once at boot and shared (typically via `Arc`) into
-/// repositories, the Kafka publisher, etc.
-#[derive(Debug)]
-pub struct Connections {
-    pub pg_pool: Arc<PgPool>,
-    pub redis_pool: RedisPool,
-    pub scylla_session: Arc<ScyllaSession>,
-    pub s3_client: S3Client,
-    pub kafka_client: KafkaClient,
-    pub grpc_clients: GrpcClients,
-}
+use domain::config::SystemConfig;
+use infrastructure::cache::{MokaCache, RedisCache};
+use infrastructure::connection::{
+    Connections, GrpcClients, KafkaClient, PgPool, S3Client, ScyllaSession, grpc_conn, kafka_conn,
+    postgres_conn, redis_conn, s3_conn, scylla_conn,
+};
 
 pub async fn init(config: &SystemConfig) -> Result<Connections> {
-    // postgres / redis / scylla / s3 init is synchronous and each creates its
-    // own temp Tokio runtime for the health-check ping.  block_in_place lets
-    // those nested block_on calls run without conflicting with the outer runtime.
-    let (pg_pool, redis_pool, scylla_session, s3_client) =
-        tokio::task::block_in_place(|| -> Result<_> {
-            let pg = Arc::new(
-                postgres_conn::create_pool(&config.repository.postgresql)
-                    .context("initialising PostgreSQL pool")?,
-            );
-            info!("PostgreSQL connection pool initialised");
+    let (pg, redis, scylla, s3) = tokio::task::block_in_place(|| -> Result<_> {
+        let pg: PgPool = postgres_conn::create_pool(&config.repository.postgresql)
+            .context("initialising PostgreSQL pool")?;
+        info!("PostgreSQL connection pool initialised");
 
-            let redis = redis_conn::create_pool(&config.repository.redis)
-                .context("initialising Redis pool")?;
-            info!("Redis connection pool initialised");
+        let redis_pool =
+            redis_conn::create_pool(&config.repository.redis).context("initialising Redis pool")?;
+        let redis = RedisCache::new(redis_pool);
+        info!("Redis connection pool initialised");
 
-            let scylla = Arc::new(
-                scylla_conn::create_session(&config.repository.scylladb)
-                    .context("initialising ScyllaDB session")?,
-            );
-            info!("ScyllaDB session initialised");
+        let scylla: ScyllaSession = scylla_conn::create_session(&config.repository.scylladb)
+            .context("initialising ScyllaDB session")?;
+        info!("ScyllaDB session initialised");
 
-            let s3 = s3_conn::create_client(&config.repository.object_storage)
-                .context("initialising S3 client")?;
-            info!("S3 client initialised");
+        let s3: S3Client = s3_conn::create_client(&config.repository.object_storage)
+            .context("initialising S3 client")?;
+        info!("S3 client initialised");
 
-            Ok((pg, redis, scylla, s3))
-        })?;
+        Ok((pg, redis, scylla, s3))
+    })?;
 
-    // Kafka uses rdkafka's tokio feature — init is natively async and runs on
-    // the caller's runtime, so no embedded runtime is needed.
-    let kafka_client = kafka_conn::create_client(
+    let moka = MokaCache::new(&config.repository.local_cache);
+    info!("Moka local cache initialised");
+
+    let kafka: KafkaClient = kafka_conn::create_client(
         &config.clients.kafka_publisher.connection,
         &config.clients.kafka_publisher.producer,
         &config.interfaces.kafka_consumer,
@@ -72,18 +48,18 @@ pub async fn init(config: &SystemConfig) -> Result<Connections> {
     .context("initialising Kafka client")?;
     info!("Kafka client initialised");
 
-    // gRPC clients use tonic which is natively async.
-    let grpc_clients = grpc_conn::create_clients(&config.clients.grpc_clients)
+    let grpc: GrpcClients = grpc_conn::create_clients(&config.clients.grpc_clients)
         .await
         .context("initialising gRPC clients")?;
     info!("gRPC clients initialised");
 
     Ok(Connections {
-        pg_pool,
-        redis_pool,
-        scylla_session,
-        s3_client,
-        kafka_client,
-        grpc_clients,
+        pg,
+        redis,
+        moka,
+        scylla,
+        s3,
+        kafka,
+        grpc,
     })
 }

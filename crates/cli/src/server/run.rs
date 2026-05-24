@@ -1,16 +1,16 @@
-//! Phase 3: start every inbound interface backed by the wired application.
+//! Phase 2: start every inbound interface backed by the bootstrapped application.
 
 pub mod grpc;
 pub mod http;
 pub mod kafka_consumer;
 pub mod websocket;
 
+use std::sync::Arc;
+
 use anyhow::Result;
+use interface::state::AppState;
 use tokio::task::JoinHandle;
 
-use super::wiring::Wired;
-
-/// Handles returned by each interface so shutdown can stop them gracefully.
 #[derive(Debug)]
 pub struct RunHandles {
     pub http: JoinHandle<()>,
@@ -20,7 +20,6 @@ pub struct RunHandles {
 }
 
 impl RunHandles {
-    /// Abort all interface tasks immediately (best-effort graceful stop).
     pub fn stop_all(self) {
         self.http.abort();
         self.grpc.abort();
@@ -29,11 +28,11 @@ impl RunHandles {
     }
 }
 
-pub fn start(wired: &Wired) -> Result<RunHandles> {
+pub fn start(app_state: &Arc<AppState>) -> Result<RunHandles> {
     Ok(RunHandles {
-        http: http::start(wired)?,
-        grpc: grpc::start(wired)?,
-        websocket: websocket::start(wired)?,
-        kafka_consumer: kafka_consumer::start(wired)?,
+        http: http::start(app_state)?,
+        grpc: grpc::start(app_state)?,
+        websocket: websocket::start(app_state)?,
+        kafka_consumer: kafka_consumer::start(app_state)?,
     })
 }

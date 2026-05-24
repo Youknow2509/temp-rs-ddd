@@ -6,6 +6,7 @@ use deadpool_redis::{Config, Pool, Runtime};
 
 use domain::config::RedisSettingRepository;
 
+#[derive(Clone)]
 pub enum RedisPool {
     Single(Pool),
     Cluster(deadpool_redis::cluster::Pool),

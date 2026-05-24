@@ -11,4 +11,5 @@ tokio.workspace = true
 
 domain = { path = "../domain" }
 infrastructure = { path = "../infrastructure" }
+interface = { path = "../interface" }
 telemetry = { path = "../telemetry" }

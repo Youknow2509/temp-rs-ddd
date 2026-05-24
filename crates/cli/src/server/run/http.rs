@@ -1,13 +1,15 @@
 //! HTTP server runtime.
 
+use std::sync::Arc;
+
 use anyhow::Result;
+use interface::state::AppState;
 use tokio::task::JoinHandle;
 
-use crate::server::wiring::Wired;
-
-pub fn start(_wired: &Wired) -> Result<JoinHandle<()>> {
-    // TODO: bind axum/hyper to `wired.config.interfaces.http_server`,
-    // mount routes that call into `wired.use_cases`.
+pub fn start(app_state: &Arc<AppState>) -> Result<JoinHandle<()>> {
+    let _state = Arc::clone(app_state);
+    // TODO: bind axum/hyper to `_state.config.interfaces.http_server`,
+    // mount routes with `_state` as shared state.
     Ok(tokio::spawn(async {
         // placeholder — real impl blocks here until shutdown signal
     }))

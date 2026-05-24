@@ -4,19 +4,15 @@ pub mod config;
 pub mod connections;
 pub mod telemetry;
 
-use self::connections::Connections;
+use std::sync::Arc;
+
 use self::telemetry::TelemetryGuard;
 use anyhow::Result;
-use domain::config::SystemConfig;
+use interface::state::AppState;
 use tracing::info;
 
-/// Output of the bootstrap phase. Consumed by `wiring` to build the
-/// repositories / services / use cases on top of these primitives.
-#[derive(Debug)]
-#[allow(dead_code)]
 pub struct Bootstrap {
-    pub config: SystemConfig,
-    pub connections: Connections,
+    pub app_state: Arc<AppState>,
     pub telemetry_guard: TelemetryGuard,
 }
 
@@ -29,8 +25,7 @@ pub async fn init() -> Result<Bootstrap> {
     info!("Connection pools initialized");
 
     Ok(Bootstrap {
-        config,
-        connections,
+        app_state: Arc::new(AppState::new(connections, config)),
         telemetry_guard,
     })
 }

@@ -1,20 +1,19 @@
-//! Phase 4: wait for a shutdown signal, then drain all resources in safe order.
+//! Phase 3: wait for a shutdown signal, then drain all resources in safe order.
 
 pub mod signal;
 
 use anyhow::Result;
 use tracing::info;
 
+use super::bootstrap::Bootstrap;
 use super::run::RunHandles;
-use super::wiring::Wired;
 
 /// Await SIGINT / SIGTERM, then drain all resources in dependency order:
 ///
 ///   1. Interfaces  — stop accepting new requests.
-///   2. DDD layers  — no new I/O after this point; Redis closed here.
-///   3. Connections — drain shared pools after layers release them.
-///   4. Telemetry   — flush last so all shutdown logs are captured.
-pub async fn drain(wired: Wired, handles: RunHandles) -> Result<()> {
+///   2. Connections — last Arc<Connections> dropped here, pools drain.
+///   3. Telemetry   — flush last so all shutdown logs are captured.
+pub async fn drain(bootstrap: Bootstrap, handles: RunHandles) -> Result<()> {
     signal::wait().await?;
     info!("shutdown signal received — draining connections");
 
@@ -22,33 +21,14 @@ pub async fn drain(wired: Wired, handles: RunHandles) -> Result<()> {
     handles.stop_all();
     info!("interfaces stopped");
 
-    // 2. Drop DDD layers — no new database / cache calls from here on.
-    //    Dropping repositories also drops RedisCache → RedisPool (close via Drop).
+    // 2. Drop Arc<AppState>. When the last clone is released (after all
+    //    interface tasks finish), Connections closes via Drop.
+    let Bootstrap { app_state, telemetry_guard } = bootstrap;
+    drop(app_state);
+    info!("connections dropped");
 
-    // TODO: drop it when implement logic
-    // drop(wired.use_cases);
-    // drop(wired.services);
-    drop(wired.repositories);
-    info!("DDD layers stopped; Redis pool closed");
-
-    // 3. Close shared connection pools (only refs remaining are in Wired).
-    wired.pg_pool.close();
-    info!("PostgreSQL pool closed");
-
-    drop(wired.scylla_session);
-    info!("ScyllaDB session closed");
-
-    drop(wired.s3_client);
-    info!("S3 client closed");
-
-    drop(wired.kafka_client);
-    info!("Kafka client closed");
-
-    drop(wired.grpc_clients);
-    info!("gRPC clients closed");
-
-    // 4. Flush telemetry last so every log line above is captured.
-    drop(wired.telemetry_guard);
+    // 3. Flush telemetry last so every log line above is captured.
+    drop(telemetry_guard);
 
     Ok(())
 }

@@ -733,6 +733,7 @@ dependencies = [
  "clap",
  "domain",
  "infrastructure",
+ "interface",
  "telemetry",
  "tokio",
  "tracing",
@@ -1928,6 +1929,10 @@ dependencies = [
 [[package]]
 name = "interface"
 version = "0.1.0"
+dependencies = [
+ "domain",
+ "infrastructure",
+]
 
 [[package]]
 name = "ipnet"
