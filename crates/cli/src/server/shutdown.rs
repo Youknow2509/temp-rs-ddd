@@ -23,7 +23,10 @@ pub async fn drain(bootstrap: Bootstrap, handles: RunHandles) -> Result<()> {
 
     // 2. Drop Arc<AppState>. When the last clone is released (after all
     //    interface tasks finish), Connections closes via Drop.
-    let Bootstrap { app_state, telemetry_guard } = bootstrap;
+    let Bootstrap {
+        app_state,
+        telemetry_guard,
+    } = bootstrap;
     drop(app_state);
     info!("connections dropped");
 

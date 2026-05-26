@@ -10,6 +10,9 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(connections: Connections, config: SystemConfig) -> Self {
-        Self { connections, config }
+        Self {
+            connections,
+            config,
+        }
     }
 }
