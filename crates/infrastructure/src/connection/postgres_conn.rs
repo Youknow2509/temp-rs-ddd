@@ -42,19 +42,16 @@ pub fn create_pool(setting: &PostgresqlSettingRepository) -> Result<PgPool> {
 }
 
 fn ping(pool: &PgPool) -> Result<()> {
+    use crate::repository::pg_healthy_repo::PgHealthyRepo;
+    use domain::repository::healthy_repo::HealthyRepository as _;
+
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .context("building ping runtime")?;
 
-    rt.block_on(async {
-        let client = pool.get().await.context("acquiring connection")?;
-        client
-            .simple_query("SELECT 1")
-            .await
-            .context("executing ping query")?;
-        Ok(())
-    })
+    rt.block_on(PgHealthyRepo::new(pool).is_healthy())
+        .context("postgres ping failed")
 }
 
 fn build_pg_config(setting: &PostgresqlSettingRepository) -> Result<PgConfig> {
