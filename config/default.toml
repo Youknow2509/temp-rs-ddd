@@ -485,6 +485,8 @@ max_request_size = 1048576
 # transaction_timeout_ms = 60000
 
 # --- gRPC clients (internal services) ---
+[clients.grpc_clients]
+is_enabled = false
 
 # --- defaults ---
 [clients.grpc_clients.defaults.endpoint]

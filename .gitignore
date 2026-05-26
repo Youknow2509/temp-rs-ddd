@@ -8,6 +8,7 @@
 **/.env
 **/.env.*
 **/.env_*
+!**/.env.dev
 
 # Rust target directory
 target/**
@@ -22,6 +23,7 @@ docs/superpowers/**
 # Config files
 config/**
 !config/default.toml
+environment/garage/*.toml
 
 # Logs
 logs/**

@@ -1,0 +1,281 @@
+# Docker compose file for environment system
+
+# For networking
+networks:
+    default-bridge-dev:
+        driver: bridge
+
+# For volumes
+volumes:
+    scylladb_data_dev:
+        driver: local
+    redis_data_dev:
+        driver: local
+    postgres_data_dev:
+        driver: local
+    garage_data_dev:
+        driver: local
+    kafka_data_dev:
+        driver: local
+    redis_ui_data:
+        driver: local
+    grafana_data_dev:
+        driver: local
+    garage_metadata_dev:
+        driver: local
+    prometheus_data_dev:
+        driver: local
+
+# Services
+services:
+    # Message qurueue - Kafka
+    kafka:
+        image: bitnamilegacy/kafka:4.0
+        networks:
+            - default-bridge-dev
+        ports:
+            - '${KAFKA_PORT_EXTERNAL}:${KAFKA_PLAINTEXT_PORT}'
+        volumes:
+            - 'kafka_data_dev:/bitnami'
+        environment:
+            # KRaft settings
+            - KAFKA_CFG_NODE_ID=0
+            - KAFKA_CFG_PROCESS_ROLES=controller,broker
+            - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:${KAFKA_CONTROLLER_PORT}
+            # Listeners
+            - KAFKA_CFG_LISTENERS=PLAINTEXT://:${KAFKA_PLAINTEXT_PORT},CONTROLLER://:${KAFKA_CONTROLLER_PORT},NW1://:${KAFKA_NW1_PORT}
+            - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${KAFKA_HOST_EXTERNAL_CONN}:${KAFKA_PLAINTEXT_PORT},NW1://kafka:${KAFKA_NW1_PORT}
+            - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,NW1:PLAINTEXT
+            - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+            - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+        healthcheck:
+            test: [
+                    'CMD-SHELL',
+                    '/opt/bitnami/kafka/bin/kafka-cluster.sh cluster-id
+                    --bootstrap-server 127.0.0.1:${KAFKA_PLAINTEXT_PORT} >
+                    /dev/null 2>&1 || exit 1',
+                ]
+            interval: 1m30s
+            timeout: 30s
+            retries: 5
+            start_period: 20s
+
+    # Kafka UI for monitoring Kafka cluster
+    kafka-ui:
+        image: provectuslabs/kafka-ui:latest
+        networks:
+            - default-bridge-dev
+        ports:
+            - '${KAFKA_UI_PORT_EXTERNAL}:8080'
+        depends_on:
+            kafka:
+                condition: service_healthy
+        environment:
+            - KAFKA_CLUSTERS_0_NAME=kafka
+            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:${KAFKA_NW1_PORT}
+
+    # Obj database - Garage
+    garage:
+        image: dxflrs/garage:v2.2.0
+        volumes:
+            - ./garage/garage.toml:/etc/garage.toml
+            - garage_metadata_dev:/var/lib/garage/meta
+            - garage_data_dev:/var/lib/garage/data
+        networks:
+            - default-bridge-dev
+        ports:
+            - '${GARAGE_S3_API_EXPORT}:3900'
+            - '${GARAGE_RPC_EXPORT}:3901'
+            - '${GARAGE_ADMIN_EXPORT}:3903'
+        healthcheck:
+            test: ['CMD', '/garage', 'status']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
+
+    # Garage UI - Object browser
+    garage-ui:
+        image: khairul169/garage-webui:1.1.0
+        volumes:
+            - ./garage/garage.toml:/etc/garage.toml
+        ports:
+            - ${GARAGE_UI_EXPORT}:3909
+        environment:
+            API_BASE_URL: 'http://garage:${GARAGE_ADMIN_EXPORT}'
+            S3_ENDPOINT_URL: 'http://garage:${GARAGE_S3_API_EXPORT}'
+        networks:
+            - default-bridge-dev
+        depends_on:
+            garage:
+                condition: service_healthy
+
+    # ScyllaDB
+    scylladb:
+        image: scylladb/scylla:2026.1
+        ports:
+            - ${SCYLLADB_TRANSPORT_PORT_EXTERNAL}:7000
+            - ${SCYLLADB_CQL_PORT_EXTERNAL}:9042
+        networks:
+            - default-bridge-dev
+        volumes:
+            - scylladb_data_dev:/var/lib/scylla
+        command: >
+            --developer-mode=${SCYLLADB_DEVELOPER_MODE}
+            --overprovisioned=${SCYLLADB_OVERPROVISIONED}
+            --smp=${SCYLLADB_SMP}
+            --memory=${SCYLLADB_MEMORY}
+            --listen-address=${SCYLLADB_LISTEN_ADDRESS}
+            --rpc-address=${SCYLLADB_RPC_ADDRESS}
+            --broadcast-address=${SCYLLADB_BROADCAST_ADDRESS}
+            --broadcast-rpc-address=${SCYLLADB_BROADCAST_RPC_ADDRESS}
+            --seeds=${SCYLLADB_SEEDS}
+            --authenticator=PasswordAuthenticator
+            --authorizer=CassandraAuthorizer
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'cqlsh',
+                    '-u',
+                    '${SCYLLADB_USER}',
+                    '-p',
+                    '${SCYLLADB_PASSWORD}',
+                    '-e',
+                    'SELECT now() FROM system.local',
+                ]
+            interval: 1m30s
+            timeout: 30s
+            retries: 5
+            start_period: 20s
+
+    # Redis
+    redis:
+        image: bitnamilegacy/redis:8.2.1-debian-12-r0
+        ports:
+            - ${REDIS_EXPORT}:6379
+        volumes:
+            - redis_data_dev:/bitnami/redis/data
+        environment:
+            - REDIS_PASSWORD=${REDIS_PASSWORD}
+            - ALLOW_EMPTY_PASSWORD=no
+            - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
+        networks:
+            - default-bridge-dev
+        healthcheck:
+            test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 20s
+
+    # RedisInsight for Redis UI
+    redis-ui:
+        image: redis/redisinsight:latest
+        networks:
+            - default-bridge-dev
+        ports:
+            - '${REDIS_UI_PORT_EXTERNAL}:5540'
+        volumes:
+            - 'redis_ui_data:/data'
+        environment:
+            - TZ=UTC
+        depends_on:
+            redis:
+                condition: service_healthy
+
+    # Postgres
+    postgres:
+        image: bitnamilegacy/postgresql:17.6.0-debian-12-r4
+        ports:
+            - ${POSTGRES_EXPORT}:5432
+        volumes:
+            - postgres_data_dev:/bitnami/postgresql
+        environment:
+            - POSTGRESQL_USERNAME=${POSTGRES_USER}
+            - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRESQL_DATABASE=${POSTGRES_DB}
+        networks:
+            - default-bridge-dev
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # Jaeger all-in-one for tracing backend (OTLP + UI)
+    jaeger:
+        image: jaegertracing/all-in-one:1.63.0
+        environment:
+            - COLLECTOR_OTLP_ENABLED=true
+        networks:
+            - default-bridge-dev
+        ports:
+            - ${JAEGER_UI_EXPORT}:16686
+            - ${JAEGER_OTLP_HTTP_EXPORT}:4318
+            - ${JAEGER_OTLP_GRPC_EXPORT}:4317
+        healthcheck:
+            test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:14269']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    # Prometheus for metrics scraping and query
+    prometheus:
+        image: bitnamilegacy/prometheus:2.55.1
+        networks:
+            - default-bridge-dev
+        ports:
+            - ${PROMETHEUS_EXPORT}:9090
+        volumes:
+            # - ./config/prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml:ro
+            - prometheus_data_dev:/opt/bitnami/prometheus/data
+        command:
+            - --config.file=/opt/bitnami/prometheus/conf/prometheus.yml
+            - --storage.tsdb.path=/opt/bitnami/prometheus/data
+            - --web.enable-lifecycle
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    '/opt/bitnami/prometheus/bin/promtool check ready',
+                    '|',
+                    'grep',
+                    '-q',
+                    'ready; echo $?',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    # Grafana UI for Prometheus metrics
+    grafana:
+        image: bitnamilegacy/grafana:11.2.0
+        networks:
+            - default-bridge-dev
+        ports:
+            - ${GRAFANA_EXPORT}:3000
+        environment:
+            - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+        volumes:
+            - grafana_data_dev:/opt/bitnami/grafana/data
+            # - ./config/grafana/provisioning/datasources/grafana-datasource-prometheus.yml:/opt/bitnami/grafana/conf/provisioning/datasources/grafana-datasource-prometheus.yml:ro
+            # - ./config/grafana/provisioning/dashboards/grafana-dashboard-provider.yml:/opt/bitnami/grafana/conf/provisioning/dashboards/grafana-dashboard-provider.yml:ro
+            # - ./config/grafana/dashboards:/opt/bitnami/grafana/dashboards:ro
+        healthcheck:
+            test: ['CMD', 'curl', '-f', 'http://localhost:3000/api/health']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        depends_on:
+            prometheus:
+                condition: service_healthy
+            jaeger:
+                condition: service_healthy

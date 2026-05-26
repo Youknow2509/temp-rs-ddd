@@ -41,6 +41,9 @@ pub struct KafkaPublisherSetting {
 #[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct GrpcClientsSetting {
+    /// Is enabled
+    pub is_enabled: bool,
+
     /// Defaults applied to every internal gRPC client unless overridden.
     pub defaults: GrpcClientSetting,
 

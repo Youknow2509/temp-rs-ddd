@@ -37,6 +37,7 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
     let mut builder = SessionBuilder::new()
         .known_nodes(&setting.cluster.contact_points)
         .connection_timeout(Duration::from_millis(setting.timeouts.connect_timeout_ms))
+        .disallow_shard_aware_port(true)
         .default_execution_profile_handle(exec_profile.into_handle());
 
     if !setting.authentication.username.is_empty() {
@@ -73,6 +74,9 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
     session
         .query_unpaged("SELECT now() FROM system.local", &[])
         .await
+        .inspect_err(|err| {
+            tracing::error!("ScyllaDB health-check query failed details: {:?}", err);
+        })
         .context("ScyllaDB health-check failed at startup")?;
 
     Ok(Arc::new(session))

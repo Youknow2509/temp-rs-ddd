@@ -1,10 +1,15 @@
 # ===
 # Variables
 # ===
+PROJECT_NAME := template-rust-server
 CARGO := cargo
 BIN   := cli
 
 PATH_RUST_DOCS := docs/rustdoc
+PATH_DOCKER_ENV_CP_DEV := environment/docker-compose-dev.yml
+PATH_DOCKER_ENV_FILE := environment/.env
+PATH_DOCKER_ENV_FILE_CP := environment/.env.dev
+PATH_DOCKER_ENV_FILE_GEN_CONFIG_S3 := environment/garage/create_garage_config_dev.sh
 
 # ===
 # Targets
@@ -15,6 +20,24 @@ PATH_RUST_DOCS := docs/rustdoc
         db-up db-down db-migrate db-reset \
         docker-build setup \
 		docs
+
+# ===
+# Docker
+# ===
+docker-create-env: ## Create docker environment for development
+	@echo "Creating .env file for docker environment..."
+	@cp $(PATH_DOCKER_ENV_FILE_CP) $(PATH_DOCKER_ENV_FILE)
+
+	@echo "Generating S3 config for docker environment..."
+	@chmod +x $(PATH_DOCKER_ENV_FILE_GEN_CONFIG_S3)
+	@$(PATH_DOCKER_ENV_FILE_GEN_CONFIG_S3)
+
+docker-run-env: ## Run enviroment for server
+	@echo "Starting docker environment for development..."
+	docker compose -p $(PROJECT_NAME) -f $(PATH_DOCKER_ENV_CP_DEV) --env-file $(PATH_DOCKER_ENV_FILE) up -d
+
+docker-temp-keyspace: ## Create template keyspace in Scylladb
+	@echo "CREATE KEYSPACE IF NOT EXISTS main_keyspace WITH replication = {'class': 'NetworkTopologyStrategy', 'replication_factor': 1};"
 
 # ===
 # Docs

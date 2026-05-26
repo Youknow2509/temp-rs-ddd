@@ -27,6 +27,10 @@ impl GrpcClients {
 /// Build one `Channel` per service in `setting.services`, run a health check
 /// against each, and return the aggregated `GrpcClients`.
 pub async fn create_clients(setting: &GrpcClientsSetting) -> Result<GrpcClients> {
+    if !setting.is_enabled {
+        return Ok(GrpcClients { channels: HashMap::new() });
+    }
+    
     let mut channels = HashMap::with_capacity(setting.services.len());
 
     for (name, cfg) in &setting.services {
