@@ -3,14 +3,20 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
+use rustls::ClientConfig;
+use rustls::pki_types::pem::PemObject;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use scylla::client::PoolSize;
+use scylla::client::execution_profile::ExecutionProfile;
+use scylla::client::session::Session;
+use scylla::client::session_builder::SessionBuilder;
 use scylla::frame::Compression;
 use scylla::frame::types::{Consistency, SerialConsistency};
-use scylla::load_balancing::DefaultPolicy;
-use scylla::retry_policy::{DefaultRetryPolicy, FallthroughRetryPolicy};
-use scylla::speculative_execution::SimpleSpeculativeExecutionPolicy;
-use scylla::transport::downgrading_consistency_retry_policy::DowngradingConsistencyRetryPolicy;
-use scylla::transport::session::PoolSize;
-use scylla::{ExecutionProfile, Session, SessionBuilder};
+use scylla::policies::load_balancing::DefaultPolicy;
+use scylla::policies::retry::{
+    DefaultRetryPolicy, DowngradingConsistencyRetryPolicy, FallthroughRetryPolicy, RetryPolicy,
+};
+use scylla::policies::speculative_execution::SimpleSpeculativeExecutionPolicy;
 
 use domain::config::ScyllaDbSettingRepository;
 
@@ -57,9 +63,9 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
             builder.keepalive_interval(Duration::from_millis(setting.pool.keepalive_interval_ms));
     }
 
-    if setting.ssl.enabled {
-        let ssl_ctx = build_ssl_context(setting)?;
-        builder = builder.ssl_context(Some(ssl_ctx));
+    if setting.tls.is_enabled {
+        let tls_context = build_tls_context(setting).context("building ScyllaDB TLS context")?;
+        builder = builder.tls_context(Some(Arc::new(tls_context)));
     }
 
     let session = builder.build().await.context("building ScyllaDB session")?;
@@ -81,16 +87,15 @@ fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<Execut
         .token_aware(true)
         .build();
 
-    let retry_policy: Box<dyn scylla::retry_policy::RetryPolicy> =
-        match setting.retry.policy.as_str() {
-            "default" => Box::new(DefaultRetryPolicy::new()),
-            "downgrading" => Box::new(DowngradingConsistencyRetryPolicy::new()),
-            "fallthrough" => Box::new(FallthroughRetryPolicy::new()),
-            other => bail!(
-                "unknown retry policy '{}'; expected default|downgrading|fallthrough",
-                other
-            ),
-        };
+    let retry_policy: Arc<dyn RetryPolicy> = match setting.retry.policy.as_str() {
+        "default" => Arc::new(DefaultRetryPolicy::new()),
+        "downgrading" => Arc::new(DowngradingConsistencyRetryPolicy::new()),
+        "fallthrough" => Arc::new(FallthroughRetryPolicy::new()),
+        other => bail!(
+            "unknown retry policy '{}'; expected default|downgrading|fallthrough",
+            other
+        ),
+    };
 
     let mut profile_builder = ExecutionProfile::builder()
         .consistency(consistency)
@@ -112,37 +117,36 @@ fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<Execut
     Ok(profile_builder.build())
 }
 
-fn build_ssl_context(setting: &ScyllaDbSettingRepository) -> Result<openssl::ssl::SslContext> {
-    use openssl::ssl::{SslContextBuilder, SslFiletype, SslMethod, SslVerifyMode};
+fn build_tls_context(setting: &ScyllaDbSettingRepository) -> Result<ClientConfig> {
+    let mut root_cert_store = rustls::RootCertStore::empty();
+    if let Some(ca_path) = &setting.tls.client_ca_file {
+        let certs: Vec<CertificateDer<'static>> = CertificateDer::pem_file_iter(ca_path)
+            .context("loading client CA certificates for TLS")?
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .context("parsing client CA certificates for TLS")?;
 
-    let mut ctx_builder =
-        SslContextBuilder::new(SslMethod::tls()).context("creating SSL context builder")?;
-
-    if !setting.ssl.ca_cert_path.is_empty() {
-        ctx_builder
-            .set_ca_file(&setting.ssl.ca_cert_path)
-            .context("loading CA certificate")?;
+        root_cert_store.add_parsable_certificates(certs);
     }
 
-    if !setting.ssl.user_cert_path.is_empty() {
-        ctx_builder
-            .set_certificate_file(&setting.ssl.user_cert_path, SslFiletype::PEM)
-            .context("loading client certificate")?;
+    if setting.tls.require_client_cert {
+        let certs: Vec<CertificateDer<'static>> =
+            CertificateDer::pem_file_iter(&setting.tls.cert_file)
+                .context("loading client certificate for TLS")?
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .context("parsing client certificate for TLS")?;
+
+        let key = PrivateKeyDer::from_pem_file(&setting.tls.key_file)
+            .context("loading client private key for TLS")?;
+
+        return rustls::ClientConfig::builder()
+            .with_root_certificates(root_cert_store)
+            .with_client_auth_cert(certs, key)
+            .context("configuring client certificate for TLS");
     }
 
-    if !setting.ssl.user_key_path.is_empty() {
-        ctx_builder
-            .set_private_key_file(&setting.ssl.user_key_path, SslFiletype::PEM)
-            .context("loading client private key")?;
-    }
-
-    if setting.ssl.validate_hostname {
-        ctx_builder.set_verify(SslVerifyMode::PEER);
-    } else {
-        ctx_builder.set_verify(SslVerifyMode::NONE);
-    }
-
-    Ok(ctx_builder.build())
+    Ok(rustls::ClientConfig::builder()
+        .with_root_certificates(root_cert_store)
+        .with_no_client_auth())
 }
 
 fn parse_compression(s: &str) -> Result<Option<Compression>> {

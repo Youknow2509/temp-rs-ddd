@@ -22,7 +22,7 @@ moka.workspace       = true
 serde_json.workspace = true
 
 scylla.workspace  = true
-openssl.workspace = true
+rustls.workspace = true
 
 aws-sdk-s3.workspace           = true
 aws-credential-types.workspace = true

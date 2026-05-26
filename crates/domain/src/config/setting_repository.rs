@@ -63,7 +63,7 @@ pub struct LocalCacheConcurrencySetting {
 pub struct ScyllaDbSettingRepository {
     pub cluster: ScyllaClusterSetting,
     pub authentication: ScyllaAuthSetting,
-    pub ssl: ScyllaSslSetting,
+    pub tls: TLSSetting,
     pub consistency: ScyllaConsistencySetting,
     pub timeouts: ScyllaTimeoutSetting,
     pub pool: ScyllaPoolSetting,
@@ -92,18 +92,6 @@ pub struct ScyllaClusterSetting {
 pub struct ScyllaAuthSetting {
     pub username: String,
     pub password: String,
-}
-
-/// SSL/TLS configuration (ScyllaDB-specific naming)
-#[derive(Debug, Deserialize)]
-#[allow(unused)]
-pub struct ScyllaSslSetting {
-    pub enabled: bool,
-    pub ca_cert_path: String,
-    pub user_cert_path: String,
-    pub user_key_path: String,
-    pub validate_hostname: bool,
-    pub cipher_suites: Vec<String>,
 }
 
 /// Consistency levels

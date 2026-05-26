@@ -84,30 +84,44 @@ config = { version = "0.15.23", default-features = false, features = ["toml"] }
 anyhow = "1.0"
 clap = { version = "4.5", features = ["derive"] }
 tracing = "0.1"
-tokio   = { version = "1", features = ["rt-multi-thread", "time", "signal", "macros"] }
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "time",
+    "signal",
+    "macros",
+] }
 
-tokio-postgres      = "0.7"
-deadpool-postgres   = { version = "0.14", features = ["rt_tokio_1"] }
+tokio-postgres = "0.7"
+deadpool-postgres = { version = "0.14", features = ["rt_tokio_1"] }
 postgres-native-tls = "0.5"
-native-tls          = "0.2"
+native-tls = "0.2"
 
-redis        = { version = "0.27", features = ["tokio-comp", "sentinel", "cluster-async"] }
-deadpool-redis = { version = "0.18", features = ["rt_tokio_1", "cluster"] }
+redis = { version = "1.2.1", features = [
+    "tokio-comp",
+    "sentinel",
+    "cluster-async",
+] }
+deadpool-redis = { version = "0.23.0", features = ["rt_tokio_1", "cluster"] }
 
-moka       = { version = "0.12", features = ["future"] }
+moka = { version = "0.12", features = ["future"] }
 serde_json = { version = "1" }
 
-scylla  = { version = "0.14", features = ["ssl"] }
-openssl = { version = "0.10", features = ["v102", "v110"] }
+scylla = { version = "1.6.0", features = ["rustls-023"] }
+rustls = { version = "0.23", features = [] }
 
-aws-sdk-s3          = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-s3 = { version = "1", features = ["behavior-version-latest"] }
 aws-credential-types = { version = "1", features = ["hardcoded-credentials"] }
 
-rdkafka = { version = "0.36", features = ["tokio", "ssl"] }
+rdkafka = { version = "0.39.0", features = ["tokio", "ssl"] }
 
-tonic        = { version = "0.12", features = ["transport", "tls"] }
-tonic-health = "0.12"
+tonic = { version = "0.14.6", features = ["transport", "_tls-any"] }
+tonic-health = "0.14.6"
 
-axum       = { version = "0.8", features = ["macros"] }
-tower      = { version = "0.5" }
-tower-http = { version = "0.6", features = ["trace", "cors", "limit", "timeout"] }
+axum = { version = "0.8", features = ["macros"] }
+tower = { version = "0.5" }
+tower-http = { version = "0.6", features = [
+    "trace",
+    "cors",
+    "limit",
+    "timeout",
+] }

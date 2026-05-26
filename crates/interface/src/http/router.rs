@@ -32,8 +32,7 @@ pub fn mount(state: Arc<AppState>) -> Router {
 
     // Level 1: Public routes - no auth, global middleware only.
     // Suitable for health, metrics, docs.
-    let public = Router::new()
-        .merge(health_router::routes()); // GET /health
+    let public = Router::new().merge(health_router::routes()); // GET /health
 
     // Level 2: Protected - single middleware.
     // route_layer ensures OPTIONS preflight is not blocked by auth.
@@ -74,10 +73,9 @@ pub fn mount(state: Arc<AppState>) -> Router {
     //     ));
 
     // Assemble the full tree.
-    let router = Router::new()
-        .merge(public);
-        // .nest("/api/v1", v1)
-        // .nest("/api/v2", v2)
+    let router = Router::new().merge(public);
+    // .nest("/api/v1", v1)
+    // .nest("/api/v2", v2)
 
     // Global middleware wraps the entire tree. with_state finalizes the state type.
     global_middleware::apply(router, cfg, &state.config.system.mode).with_state(state)
