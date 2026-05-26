@@ -107,3 +107,7 @@ rdkafka = { version = "0.36", features = ["tokio", "ssl"] }
 
 tonic        = { version = "0.12", features = ["transport", "tls"] }
 tonic-health = "0.12"
+
+axum       = { version = "0.8", features = ["macros"] }
+tower      = { version = "0.5" }
+tower-http = { version = "0.6", features = ["trace", "cors", "limit", "timeout"] }

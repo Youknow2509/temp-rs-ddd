@@ -1,16 +1,27 @@
 //! HTTP server runtime.
 
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use anyhow::Result;
 use interface::state::AppState;
-use tokio::task::JoinHandle;
+use tokio::{net::TcpListener, task::JoinHandle};
+use tracing::info;
 
 pub fn start(app_state: &Arc<AppState>) -> Result<JoinHandle<()>> {
-    let _state = Arc::clone(app_state);
-    // TODO: bind axum/hyper to `_state.config.interfaces.http_server`,
-    // mount routes with `_state` as shared state.
-    Ok(tokio::spawn(async {
-        // placeholder — real impl blocks here until shutdown signal
+    let state = Arc::clone(app_state);
+    let addr = SocketAddr::from((
+        state.config.interfaces.http_server.network.host,
+        state.config.interfaces.http_server.network.port,
+    ));
+    let router = interface::http::router(Arc::clone(&state));
+
+    Ok(tokio::spawn(async move {
+        let listener = TcpListener::bind(addr)
+            .await
+            .expect("failed to bind HTTP listener");
+        info!(%addr, "HTTP server listening");
+        axum::serve(listener, router)
+            .await
+            .expect("HTTP server error");
     }))
 }

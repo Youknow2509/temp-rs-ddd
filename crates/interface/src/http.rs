@@ -1,1 +1,15 @@
-pub mod state;
+pub mod dto;
+pub mod handle;
+pub mod middleware;
+pub mod response;
+pub mod router;
+
+use std::sync::Arc;
+
+use axum::Router;
+
+use crate::state::AppState;
+
+pub fn router(state: Arc<AppState>) -> Router {
+    self::router::mount(state)
+}

@@ -9,7 +9,8 @@ clap.workspace = true
 tracing = { workspace = true }
 tokio.workspace = true
 
-domain = { path = "../domain" }
+domain         = { path = "../domain" }
 infrastructure = { path = "../infrastructure" }
-interface = { path = "../interface" }
-telemetry = { path = "../telemetry" }
+interface      = { path = "../interface" }
+telemetry      = { path = "../telemetry" }
+axum.workspace = true
