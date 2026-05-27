@@ -4,13 +4,19 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-domain         = { path = "../domain" }
+domain = { path = "../domain" }
 infrastructure = { path = "../infrastructure" }
-shared         = { path = "../shared" }
-axum.workspace       = true
-tower.workspace      = true
+shared = { path = "../shared" }
+axum.workspace = true
+utoipa.workspace = true
+utoipa-swagger-ui.workspace = true
+utoipa-axum.workspace = true
+utoipa-rapidoc.workspace = true
+utoipa-redoc.workspace = true
+utoipa-scalar.workspace = true
+tower.workspace = true
 tower-http.workspace = true
-serde.workspace      = true
+serde.workspace = true
 serde_json.workspace = true
-tracing.workspace    = true
-tokio.workspace      = true
+tracing.workspace = true
+tokio.workspace = true

@@ -3,6 +3,7 @@ pub mod handle;
 pub mod middleware;
 pub mod response;
 pub mod router;
+pub mod swagger;
 
 use std::sync::Arc;
 

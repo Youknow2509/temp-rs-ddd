@@ -8,6 +8,13 @@ use crate::{
     state::AppState,
 };
 
+#[utoipa::path(
+    get,
+    path = "/health",
+    responses(
+        (status = 200, description = "Server is healthy"),
+    )
+)]
 pub async fn get_health(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<HealthQuery>,
