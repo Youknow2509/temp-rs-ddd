@@ -1,3 +1,4 @@
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::Duration;
@@ -10,8 +11,10 @@ use scylla::client::PoolSize;
 use scylla::client::execution_profile::ExecutionProfile;
 use scylla::client::session::Session;
 use scylla::client::session_builder::SessionBuilder;
+use scylla::errors::TranslationError;
 use scylla::frame::Compression;
 use scylla::frame::types::{Consistency, SerialConsistency};
+use scylla::policies::address_translator::{AddressTranslator, UntranslatedPeer};
 use scylla::policies::load_balancing::DefaultPolicy;
 use scylla::policies::retry::{
     DefaultRetryPolicy, DowngradingConsistencyRetryPolicy, FallthroughRetryPolicy, RetryPolicy,
@@ -19,9 +22,12 @@ use scylla::policies::retry::{
 use scylla::policies::speculative_execution::SimpleSpeculativeExecutionPolicy;
 
 use domain::config::ScyllaDbSettingRepository;
+use shared::constant::path::RUN_MODE_DEVELOPMENT;
+use tonic::async_trait;
 
 pub type ScyllaSession = Arc<Session>;
 
+// Create session with provided settings. This function is blocking and should be called at startup only.
 pub fn create_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSession> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -31,13 +37,13 @@ pub fn create_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSessi
     rt.block_on(build_session(setting))
 }
 
+// Builds the session asynchronously. This is separated from `create_session` to allow using async/await syntax.
 async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSession> {
     let exec_profile = build_execution_profile(setting)?;
 
     let mut builder = SessionBuilder::new()
         .known_nodes(&setting.cluster.contact_points)
         .connection_timeout(Duration::from_millis(setting.timeouts.connect_timeout_ms))
-        .disallow_shard_aware_port(true)
         .default_execution_profile_handle(exec_profile.into_handle());
 
     if !setting.authentication.username.is_empty() {
@@ -69,6 +75,21 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
         builder = builder.tls_context(Some(Arc::new(tls_context)));
     }
 
+    // Check env mode
+    match std::env::var(shared::constant::env::ENV_RUN_MODE) {
+        Ok(mode) => {
+            if RUN_MODE_DEVELOPMENT == mode {
+                let docker_translator = Arc::new(DockerTranslator);
+                builder = builder
+                    .disallow_shard_aware_port(true)
+                    .address_translator(docker_translator);
+            }
+        }
+        Err(_) => {
+            // Use default run mode
+        }
+    }
+
     let session = builder.build().await.context("building ScyllaDB session")?;
 
     session
@@ -82,6 +103,7 @@ async fn build_session(setting: &ScyllaDbSettingRepository) -> Result<ScyllaSess
     Ok(Arc::new(session))
 }
 
+// This translator is used in development mode to translate the addresses of the nodes to localhost, so that we can run ScyllaDB in Docker and connect to it from the host machine.
 fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<ExecutionProfile> {
     let consistency = parse_consistency(&setting.consistency.default)?;
     let serial_consistency = parse_serial_consistency(&setting.consistency.serial)?;
@@ -121,6 +143,7 @@ fn build_execution_profile(setting: &ScyllaDbSettingRepository) -> Result<Execut
     Ok(profile_builder.build())
 }
 
+// Represents a ScyllaDB node as received from the cluster, with the address as sent by the node and other information about it.
 fn build_tls_context(setting: &ScyllaDbSettingRepository) -> Result<ClientConfig> {
     let mut root_cert_store = rustls::RootCertStore::empty();
     if let Some(ca_path) = &setting.tls.client_ca_file {
@@ -153,6 +176,7 @@ fn build_tls_context(setting: &ScyllaDbSettingRepository) -> Result<ClientConfig
         .with_no_client_auth())
 }
 
+// This translator is used in development mode to translate the addresses of the nodes to localhost, so that we can run ScyllaDB in Docker and connect to it from the host machine.
 fn parse_compression(s: &str) -> Result<Option<Compression>> {
     match s {
         "none" | "" => Ok(None),
@@ -162,6 +186,7 @@ fn parse_compression(s: &str) -> Result<Option<Compression>> {
     }
 }
 
+// Parses the consistency level from a string. The string is case-insensitive and can be one of the following: ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, LOCAL_ONE.
 fn parse_consistency(s: &str) -> Result<Consistency> {
     match s.to_ascii_uppercase().as_str() {
         "ANY" => Ok(Consistency::Any),
@@ -180,6 +205,7 @@ fn parse_consistency(s: &str) -> Result<Consistency> {
     }
 }
 
+// Parses the serial consistency level from a string. The string is case-insensitive and can be one of the following: SERIAL, LOCAL_SERIAL.
 fn parse_serial_consistency(s: &str) -> Result<SerialConsistency> {
     match s.to_ascii_uppercase().as_str() {
         "SERIAL" => Ok(SerialConsistency::Serial),
@@ -188,5 +214,23 @@ fn parse_serial_consistency(s: &str) -> Result<SerialConsistency> {
             "unknown serial consistency '{}'; expected SERIAL|LOCAL_SERIAL",
             other
         ),
+    }
+}
+
+// Uses a custom address translator for peer addresses retrieved from the cluster. By default, no translation is performed.
+// The translator owns an Arc to the settings so it can be stored as a 'static trait object.
+struct DockerTranslator;
+
+#[async_trait]
+impl AddressTranslator for DockerTranslator {
+    async fn translate_address(
+        &self,
+        untranslated_peer: &UntranslatedPeer,
+    ) -> Result<SocketAddr, TranslationError> {
+        let _ = untranslated_peer;
+        Ok(SocketAddr::V4(SocketAddrV4::new(
+            Ipv4Addr::LOCALHOST,
+            untranslated_peer.untranslated_address().port(),
+        )))
     }
 }

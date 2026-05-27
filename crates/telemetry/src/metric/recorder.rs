@@ -28,6 +28,7 @@ pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<PrometheusHandle>> 
             "collect_interval_secs has no effect; scrape interval is set on the Prometheus server"
         );
     }
+    #[allow(clippy::let_unit_value)]
     let _handle = PrometheusBuilder::new()
         .with_http_listener((cfg.host, cfg.port))
         .install()
