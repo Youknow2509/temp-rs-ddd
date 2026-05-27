@@ -4,8 +4,9 @@ pub mod metric;
 pub(crate) mod trace;
 
 use anyhow::Result;
-use metrics_exporter_prometheus::PrometheusHandle;
 use opentelemetry_sdk::trace::SdkTracerProvider;
+use tokio::task::JoinHandle;
+use tracing::info;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -13,7 +14,7 @@ use domain::config::TelemetrySystemSetting;
 
 pub struct TelemetryGuard {
     _log_guard: Option<WorkerGuard>,
-    _metrics_handle: Option<PrometheusHandle>,
+    _metrics_task: Option<JoinHandle<()>>,
     _tracer_provider: Option<SdkTracerProvider>,
 }
 
@@ -23,13 +24,24 @@ impl std::fmt::Debug for TelemetryGuard {
     }
 }
 
-impl Drop for TelemetryGuard {
-    fn drop(&mut self) {
+impl TelemetryGuard {
+    pub fn stop(&mut self) {
+        if let Some(handle) = self._metrics_task.take() {
+            info!("shutting down metrics exporter");
+            handle.abort();
+        }
+
         if let Some(provider) = self._tracer_provider.take()
             && let Err(e) = provider.shutdown()
         {
             eprintln!("OTEL tracer provider shutdown error: {e}");
         }
+    }
+}
+
+impl Drop for TelemetryGuard {
+    fn drop(&mut self) {
+        self.stop();
         // _log_guard drops last — joins the file-appender thread.
     }
 }
@@ -38,7 +50,7 @@ pub fn init(cfg: &TelemetrySystemSetting, extra_fields: &[(&str, &str)]) -> Resu
     let (fmt_layers, log_guard) =
         log::build_layers::<tracing_subscriber::Registry>(&cfg.logger, extra_fields)?;
     let trace_output = trace::build(&cfg.tracing)?;
-    let metrics_handle = metric::build(&cfg.metrics)?;
+    let metrics_task = metric::build(&cfg.metrics)?;
 
     let mut all_layers: Vec<Box<dyn Layer<tracing_subscriber::Registry> + Send + Sync + 'static>> =
         fmt_layers;
@@ -52,7 +64,7 @@ pub fn init(cfg: &TelemetrySystemSetting, extra_fields: &[(&str, &str)]) -> Resu
     tracing_subscriber::registry().with(all_layers).try_init()?;
     Ok(TelemetryGuard {
         _log_guard: log_guard,
-        _metrics_handle: metrics_handle,
+        _metrics_task: metrics_task,
         _tracer_provider: tracer_provider,
     })
 }

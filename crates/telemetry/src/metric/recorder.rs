@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
-use metrics_exporter_prometheus::{PrometheusBuilder, PrometheusHandle};
+use metrics_exporter_prometheus::PrometheusBuilder;
+use tokio::task::JoinHandle;
 
 use domain::config::MetricsSetting;
 use tracing;
 
-pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<PrometheusHandle>> {
+pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<JoinHandle<()>>> {
     if !cfg.enabled {
         return Ok(None);
     }
@@ -28,10 +29,14 @@ pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<PrometheusHandle>> 
             "collect_interval_secs has no effect; scrape interval is set on the Prometheus server"
         );
     }
-    #[allow(clippy::let_unit_value)]
-    let _handle = PrometheusBuilder::new()
+    let (recorder, exporter) = PrometheusBuilder::new()
         .with_http_listener((cfg.host, cfg.port))
-        .install()
+        .build()
         .context("failed to install Prometheus metrics recorder")?;
-    Ok(None)
+
+    metrics::set_global_recorder(recorder).context("failed to set global Prometheus recorder")?;
+
+    Ok(Some(tokio::spawn(async move {
+        let _ = exporter.await;
+    })))
 }

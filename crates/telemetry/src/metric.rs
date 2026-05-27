@@ -1,11 +1,11 @@
 mod recorder;
 
 use anyhow::Result;
-use metrics_exporter_prometheus::PrometheusHandle;
+use tokio::task::JoinHandle;
 
 use domain::config::MetricsSetting;
 
-pub fn build(cfg: &MetricsSetting) -> Result<Option<PrometheusHandle>> {
+pub fn build(cfg: &MetricsSetting) -> Result<Option<JoinHandle<()>>> {
     recorder::install(cfg)
 }
 
