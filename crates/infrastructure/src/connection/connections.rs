@@ -9,7 +9,6 @@ use crate::connection::{GrpcClients, KafkaClient, PgPool, S3Client, ScyllaSessio
 ///
 /// Per-request DDD structs (repos, services, use cases) borrow `&'a`
 /// references from here — zero heap allocation in the hot path.
-#[derive(Debug)]
 pub struct Connections {
     /// PostgreSQL connection pool (deadpool, internally Arc-based).
     pub pg: PgPool,
@@ -31,4 +30,6 @@ pub struct Connections {
 
     /// gRPC client channels keyed by logical service name.
     pub grpc: GrpcClients,
+    // Qdrant client.
+    // pub qdrant: QdrantClient,
 }

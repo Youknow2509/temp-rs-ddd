@@ -133,3 +133,9 @@ utoipa-rapidoc = { version = "6.0.0", features = ["axum"] }
 utoipa-redoc = { version = "6.0.0", features = ["axum"] }
 utoipa-scalar = { version = "0.3.0", features = ["axum"] }
 metrics = { version = "0.24" }
+
+# ===
+# Vector Database / AI Search
+# ===
+# Qdrant vector database client
+qdrant-client = { version = "1.18.0" }

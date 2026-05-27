@@ -673,3 +673,35 @@ export_timeout_ms = 30000
 
 [telemetry.tracing.headers]
 # "x-api-key" = ""
+
+
+# --- Qdrant ---
+[repository.qdrant]
+api_key = ""
+host = "127.0.0.1"
+port = 6334
+collection = "main_collection"
+dimension = 384
+timeout_ms = 10000
+connect_timeout_ms = 5000
+keep_alive_interval = true
+custom_headers = [
+    [
+        "x-service-name",
+        "session_worker",
+    ],
+    [
+        "x-region",
+        "ap-southeast-1",
+    ],
+]
+pool_size = 16
+check_compatibility = false
+compression = "gzip" # none | gzip
+
+[repository.qdrant.tls]
+is_enabled = false
+cert_file = "certs/qdrant/client.crt"
+key_file = "certs/qdrant/client.key"
+require_client_cert = false
+min_version = "TLS1.2"

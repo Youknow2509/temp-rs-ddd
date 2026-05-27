@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 
 use crate::connection::RedisPool;
 
-// ── Error ─────────────────────────────────────────────────────────────────────
+// --- Error ---
 
 #[derive(Debug)]
 pub struct RedisCacheError(String);
@@ -34,7 +34,7 @@ impl fmt::Display for RedisCacheError {
 
 impl std::error::Error for RedisCacheError {}
 
-// ── Serialization helpers ─────────────────────────────────────────────────────
+// --- Serialization helpers ---
 
 fn ser<V: Serialize>(v: &V) -> Result<Bytes, RedisCacheError> {
     serde_json::to_vec(v)
@@ -46,7 +46,7 @@ fn de<V: DeserializeOwned>(bytes: &[u8]) -> Result<V, RedisCacheError> {
     serde_json::from_slice(bytes).map_err(RedisCacheError::serde)
 }
 
-// ── RedisCache ────────────────────────────────────────────────────────────────
+// --- RedisCache ---
 
 #[derive(Debug, Clone)]
 pub struct RedisCache {
@@ -85,12 +85,12 @@ macro_rules! with_conn {
     };
 }
 
-// ── impl DistributedCache ─────────────────────────────────────────────────────
+// --- impl DistributedCache ---
 
 impl DistributedCache for RedisCache {
     type Error = RedisCacheError;
 
-    // ── String: basic ─────────────────────────────────────────────────────────
+    // --- String: basic ---
 
     async fn get<V>(&self, key: &str) -> Result<Option<V>, Self::Error>
     where
@@ -140,7 +140,7 @@ impl DistributedCache for RedisCache {
         Ok(count > 0)
     }
 
-    // ── Key metadata ──────────────────────────────────────────────────────────
+    // --- Key metadata ---
 
     async fn exists(&self, key: &str) -> Result<bool, Self::Error> {
         let count: u64 = with_conn!(self.pool, conn, {
@@ -176,7 +176,7 @@ impl DistributedCache for RedisCache {
         })
     }
 
-    // ── Atomic counters ───────────────────────────────────────────────────────
+    // --- Atomic counters ---
 
     async fn increment(&self, key: &str, delta: i64) -> Result<i64, Self::Error> {
         let v: i64 = with_conn!(self.pool, conn, {
@@ -196,7 +196,7 @@ impl DistributedCache for RedisCache {
         Ok(v)
     }
 
-    // ── Conditional set ───────────────────────────────────────────────────────
+    // --- Conditional set ---
 
     async fn set_if_not_exists<V>(
         &self,
@@ -254,7 +254,7 @@ impl DistributedCache for RedisCache {
         Ok(value)
     }
 
-    // ── Batch ─────────────────────────────────────────────────────────────────
+    // --- Batch ---
 
     async fn get_many<V>(&self, keys: &[&str]) -> Result<Vec<Option<V>>, Self::Error>
     where
@@ -302,7 +302,7 @@ impl DistributedCache for RedisCache {
         Ok(count)
     }
 
-    // ── List ──────────────────────────────────────────────────────────────────
+    // --- List ---
 
     async fn list_push_front<V>(&self, key: &str, value: &V) -> Result<u64, Self::Error>
     where
@@ -376,7 +376,7 @@ impl DistributedCache for RedisCache {
         Ok(len)
     }
 
-    // ── Set ───────────────────────────────────────────────────────────────────
+    // --- Set ---
 
     async fn set_add<V>(&self, key: &str, member: &V) -> Result<bool, Self::Error>
     where
@@ -434,7 +434,7 @@ impl DistributedCache for RedisCache {
         Ok(card)
     }
 
-    // ── Hash ──────────────────────────────────────────────────────────────────
+    // --- Hash ---
 
     async fn hash_set<V>(&self, key: &str, field: &str, value: &V) -> Result<bool, Self::Error>
     where
@@ -547,7 +547,7 @@ impl DistributedCache for RedisCache {
         Ok(len)
     }
 
-    // ── Sorted set ────────────────────────────────────────────────────────────
+    // --- Sorted set ---
 
     async fn zset_add<V>(&self, key: &str, member: &V, score: f64) -> Result<bool, Self::Error>
     where
@@ -638,7 +638,7 @@ impl DistributedCache for RedisCache {
         Ok(card)
     }
 
-    // ── Lua scripting ─────────────────────────────────────────────────────────
+    // --- Lua scripting ---
 
     async fn eval<V>(&self, script: &str, keys: &[&str], args: &[&str]) -> Result<V, Self::Error>
     where
@@ -684,7 +684,7 @@ impl DistributedCache for RedisCache {
         Ok(sha)
     }
 
-    // ── Health ────────────────────────────────────────────────────────────────
+    // --- Health ---
 
     async fn ping(&self) -> Result<(), Self::Error> {
         with_conn!(self.pool, conn, {

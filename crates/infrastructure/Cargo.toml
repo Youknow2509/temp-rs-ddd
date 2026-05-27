@@ -33,5 +33,7 @@ rdkafka.workspace = true
 tonic.workspace = true
 tonic-health.workspace = true
 
+qdrant-client.workspace = true
+
 domain = { path = "../domain" }
 shared = { path = "../shared" }

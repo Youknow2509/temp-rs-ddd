@@ -10,6 +10,37 @@ pub struct RepositorySystemSetting {
     pub object_storage: ObjectStorageSetting,
     pub scylladb: ScyllaDbSettingRepository,
     pub local_cache: LocalCacheSetting,
+    pub qdrant: QdrantSettingRepository,
+}
+
+// ===
+// Qdrant - Vector Database
+// ===
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct QdrantSettingRepository {
+    pub api_key: String,
+    pub host: String,
+    pub port: u16,
+    pub tls: TLSSetting,
+
+    pub collection: String,
+    pub dimension: u64,
+
+    // Timeouts
+    pub timeout_ms: u64,
+    pub connect_timeout_ms: u64,
+
+    // Custom headers
+    pub custom_headers: Vec<(String, String)>,
+
+    // Pool settings
+    pub pool_size: usize,
+
+    // Other
+    pub keep_alive_interval: bool,
+    pub check_compatibility: bool,
+    pub compression: Option<String>, // none | gzip
 }
 
 // ===
