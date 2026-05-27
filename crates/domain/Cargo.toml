@@ -4,7 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ===
+# Workspace Dependencies
+# ===
 serde.workspace = true
 
 [dev-dependencies]
+# ===
+# Test/Fixture Utilities
+# ===
 toml = "0.8"

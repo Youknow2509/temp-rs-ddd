@@ -4,12 +4,22 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ===
+# Internal Crates
+# ===
 domain = { path = "../domain" }
+
+# ===
+# Core Utilities & Runtime
+# ===
 anyhow.workspace = true
 serde_json = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time"] }
 
-# Logging
+# ===
+# Logging & Tracing
+# ===
 tracing.workspace = true
 tracing-subscriber = { version = "0.3", features = [
     "env-filter",
@@ -20,11 +30,15 @@ tracing-subscriber = { version = "0.3", features = [
 ] }
 tracing-appender = "0.2"
 
+# ===
 # Metrics
+# ===
 metrics.workspace = true
 metrics-exporter-prometheus = "0.18.3"
 
-# Tracing (OTEL)
+# ===
+# Observability / OpenTelemetry
+# ===
 tracing-opentelemetry = "0.33"
 opentelemetry = "0.32"
 opentelemetry_sdk = { version = "0.32", features = [
@@ -38,6 +52,3 @@ opentelemetry-otlp = { version = "0.32", features = [
 opentelemetry-semantic-conventions = "0.32"
 opentelemetry-jaeger-propagator = "0.32"
 tonic = { version = "0.14.6", default-features = false }
-
-# Tokio runtime for OTEL batch exporter
-tokio = { version = "1", features = ["rt-multi-thread", "time"] }

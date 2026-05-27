@@ -4,36 +4,66 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ===
+# Serialization / Configuration
+# ===
 anyhow.workspace = true
 config.workspace = true
 serde.workspace = true
+serde_json.workspace = true
+bytes.workspace = true
+moka.workspace = true
+
+# ===
+# Async Runtime / Observability
+# ===
 tokio.workspace = true
 tracing.workspace = true
-bytes.workspace = true
 
+# ===
+# PostgreSQL
+# ===
 tokio-postgres.workspace = true
 deadpool-postgres.workspace = true
 postgres-native-tls.workspace = true
 native-tls.workspace = true
 
+# ===
+# Redis / Cache
+# ===
 redis.workspace = true
 deadpool-redis.workspace = true
 
-moka.workspace = true
-serde_json.workspace = true
-
+# ===
+# ScyllaDB / Cassandra
+# ===
 scylla.workspace = true
 rustls.workspace = true
 
+# ===
+# Object Storage / AWS
+# ===
 aws-sdk-s3.workspace = true
 aws-credential-types.workspace = true
 
+# ===
+# Messaging / Streaming
+# ===
 rdkafka.workspace = true
 
+# ===
+# gRPC
+# ===
 tonic.workspace = true
 tonic-health.workspace = true
 
+# ===
+# Vector Database / AI Search
+# ===
 qdrant-client.workspace = true
 
+# ===
+# Internal Crates
+# ===
 domain = { path = "../domain" }
 shared = { path = "../shared" }

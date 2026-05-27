@@ -4,23 +4,38 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ===
+# Internal Crates
+# ===
 domain = { path = "../domain" }
 infrastructure = { path = "../infrastructure" }
 shared = { path = "../shared" }
+
+# ===
+# Web Framework & Middleware
+# ===
 axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+# ===
+# OpenAPI / API Documentation
+# ===
 utoipa.workspace = true
 utoipa-swagger-ui.workspace = true
 utoipa-axum.workspace = true
 utoipa-rapidoc.workspace = true
 utoipa-redoc.workspace = true
 utoipa-scalar.workspace = true
-tower.workspace = true
-tower-http.workspace = true
+
+# ===
+# Serialization / Utils / Runtime / Observability
+# ===
 serde.workspace = true
 serde_json.workspace = true
-tracing.workspace = true
-tokio.workspace = true
-metrics.workspace = true
-once_cell.workspace = true
 bytes.workspace = true
 anyhow.workspace = true
+metrics.workspace = true
+once_cell.workspace = true
+tokio.workspace = true
+tracing.workspace = true

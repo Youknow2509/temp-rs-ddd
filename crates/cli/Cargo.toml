@@ -4,15 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+# ===
+# Workspace Dependencies
+# ===
 anyhow.workspace = true
 clap.workspace = true
-tracing = { workspace = true }
+tracing.workspace = true
 tokio.workspace = true
 bytes.workspace = true
 rdkafka.workspace = true
+axum.workspace = true
 
+# ===
+# Internal Crates
+# ===
 domain = { path = "../domain" }
 infrastructure = { path = "../infrastructure" }
 interface = { path = "../interface" }
 telemetry = { path = "../telemetry" }
-axum.workspace = true
