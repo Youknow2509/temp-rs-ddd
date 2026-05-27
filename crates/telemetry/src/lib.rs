@@ -6,7 +6,6 @@ pub(crate) mod trace;
 use anyhow::Result;
 use metrics_exporter_prometheus::PrometheusHandle;
 use opentelemetry_sdk::trace::SdkTracerProvider;
-use tokio::runtime::Runtime;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -16,7 +15,6 @@ pub struct TelemetryGuard {
     _log_guard: Option<WorkerGuard>,
     _metrics_handle: Option<PrometheusHandle>,
     _tracer_provider: Option<SdkTracerProvider>,
-    _tokio_rt: Option<Runtime>,
 }
 
 impl std::fmt::Debug for TelemetryGuard {
@@ -32,7 +30,6 @@ impl Drop for TelemetryGuard {
         {
             eprintln!("OTEL tracer provider shutdown error: {e}");
         }
-        self._tokio_rt.take();
         // _log_guard drops last — joins the file-appender thread.
     }
 }
@@ -46,18 +43,17 @@ pub fn init(cfg: &TelemetrySystemSetting, extra_fields: &[(&str, &str)]) -> Resu
     let mut all_layers: Vec<Box<dyn Layer<tracing_subscriber::Registry> + Send + Sync + 'static>> =
         fmt_layers;
 
-    let (tracer_provider, tokio_rt) = if let Some(output) = trace_output {
+    let tracer_provider = if let Some(output) = trace_output {
         all_layers.push(output.layer.boxed());
-        (Some(output.provider), Some(output.rt))
+        Some(output.provider)
     } else {
-        (None, None)
+        None
     };
     tracing_subscriber::registry().with(all_layers).try_init()?;
     Ok(TelemetryGuard {
         _log_guard: log_guard,
         _metrics_handle: metrics_handle,
         _tracer_provider: tracer_provider,
-        _tokio_rt: tokio_rt,
     })
 }
 

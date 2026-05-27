@@ -2,10 +2,9 @@ mod exporter;
 mod propagator;
 mod provider;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use opentelemetry::{global, trace::TracerProvider as _};
 use opentelemetry_sdk::trace::SdkTracerProvider;
-use tokio::runtime::Runtime;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::Registry;
 
@@ -14,7 +13,6 @@ use domain::config::TracingSetting;
 pub(crate) struct TraceOutput {
     pub(crate) provider: SdkTracerProvider,
     pub(crate) layer: OpenTelemetryLayer<Registry, opentelemetry_sdk::trace::Tracer>,
-    pub(crate) rt: Runtime,
 }
 
 pub(crate) fn build(cfg: &TracingSetting) -> Result<Option<TraceOutput>> {
@@ -22,15 +20,7 @@ pub(crate) fn build(cfg: &TracingSetting) -> Result<Option<TraceOutput>> {
         return Ok(None);
     }
 
-    // Dedicated runtime — main bootstrap is sync; OTEL batch exporter needs Tokio.
-    let rt = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(2)
-        .thread_name("otel-batch")
-        .enable_all()
-        .build()
-        .context("failed to build OTEL tokio runtime")?;
-
-    let p = rt.block_on(async { provider::build_provider(cfg) })?;
+    let p = provider::build_provider(cfg)?;
 
     propagator::install_propagators(&cfg.propagation);
 
@@ -39,11 +29,7 @@ pub(crate) fn build(cfg: &TracingSetting) -> Result<Option<TraceOutput>> {
 
     global::set_tracer_provider(p.clone());
 
-    Ok(Some(TraceOutput {
-        provider: p,
-        layer,
-        rt,
-    }))
+    Ok(Some(TraceOutput { provider: p, layer }))
 }
 
 #[cfg(test)]
