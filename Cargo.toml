@@ -90,6 +90,7 @@ tokio = { version = "1", features = [
     "signal",
     "macros",
 ] }
+once_cell = { version = "1.21.4" }
 
 tokio-postgres = "0.7"
 deadpool-postgres = { version = "0.14", features = ["rt_tokio_1"] }

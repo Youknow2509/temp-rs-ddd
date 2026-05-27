@@ -144,6 +144,10 @@ pub struct KafkaConsumerSetting {
 
     // Concurrency
     pub concurrency: KafkaConsumerConcurrencySetting,
+
+    // Per-topic overrides (optional). Use to tune workers, channel buffer and
+    // handler mapping per topic. If absent, consumer-level concurrency applies.
+    pub topics: Option<Vec<KafkaTopicSetting>>,
 }
 
 /// Consumer group identification
@@ -197,6 +201,33 @@ pub struct KafkaConsumerConcurrencySetting {
     pub worker_threads: usize,
     /// Buffer size between fetch and processing
     pub channel_buffer_size: usize,
+}
+
+/// Per-topic consumer configuration allowing overrides for worker count,
+/// channel buffer size and handler mapping. All fields are optional so the
+/// global `KafkaConsumerSetting` values can be used as defaults.
+#[derive(Debug, Deserialize)]
+#[allow(unused)]
+pub struct KafkaTopicSetting {
+    /// Topic name
+    pub name: String,
+
+    /// Number of workers to spawn for this topic. If `None`, use global
+    /// `concurrency.worker_threads`.
+    pub workers: usize,
+
+    /// Buffer size for the mpsc channel queued between consumer and workers.
+    /// If `None`, use global `concurrency.channel_buffer_size`.
+    pub buffer_size: usize,
+
+    /// Handler identifier to map the topic to a specific handler
+    /// function/module in your application (e.g. "handle_topic_a").
+    pub handler: String,
+
+    /// Override for auto-commit behavior for this topic. If `Some`,
+    /// it overrides the global `offset.enable_auto_commit` for messages from
+    /// this topic (implementation must respect this flag when committing).
+    pub enable_auto_commit: bool,
 }
 
 // ===

@@ -2081,10 +2081,13 @@ dependencies = [
 name = "interface"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum 0.8.9",
+ "bytes",
  "domain",
  "infrastructure",
  "metrics",
+ "once_cell",
  "serde",
  "serde_json",
  "shared",

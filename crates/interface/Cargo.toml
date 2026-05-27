@@ -21,3 +21,6 @@ serde_json.workspace = true
 tracing.workspace = true
 tokio.workspace = true
 metrics.workspace = true
+once_cell.workspace = true
+bytes.workspace = true
+anyhow.workspace = true

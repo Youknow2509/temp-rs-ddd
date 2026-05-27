@@ -211,6 +211,22 @@ heartbeat_interval_ms = 3000
 worker_threads = 4
 channel_buffer_size = 1024
 
+# Per-topic consumer overrides (optional). Each entry can override worker
+# count, channel buffer size and specify the handler name to dispatch to.
+[[interfaces.kafka_consumer.topics]]
+name = "topic1"
+workers = 4
+buffer_size = 1024
+handler = "topic1_handler"
+enable_auto_commit = false
+
+[[interfaces.kafka_consumer.topics]]
+name = "topic2"
+workers = 2
+buffer_size = 512
+handler = "topic2_handler"
+enable_auto_commit = false
+
 # ===
 # repository — datastores
 # ===
