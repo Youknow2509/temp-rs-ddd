@@ -28,11 +28,9 @@ pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<PrometheusHandle>> 
             "collect_interval_secs has no effect; scrape interval is set on the Prometheus server"
         );
     }
-
-    let handle = PrometheusBuilder::new()
+    let _handle = PrometheusBuilder::new()
         .with_http_listener((cfg.host, cfg.port))
-        .install_recorder()
+        .install()
         .context("failed to install Prometheus metrics recorder")?;
-
-    Ok(Some(handle))
+    Ok(None)
 }

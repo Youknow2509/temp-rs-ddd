@@ -1956,6 +1956,7 @@ dependencies = [
  "axum",
  "domain",
  "infrastructure",
+ "metrics",
  "serde",
  "serde_json",
  "shared",

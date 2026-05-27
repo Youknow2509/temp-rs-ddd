@@ -53,7 +53,6 @@ pub fn init(cfg: &TelemetrySystemSetting, extra_fields: &[(&str, &str)]) -> Resu
         (None, None)
     };
     tracing_subscriber::registry().with(all_layers).try_init()?;
-
     Ok(TelemetryGuard {
         _log_guard: log_guard,
         _metrics_handle: metrics_handle,

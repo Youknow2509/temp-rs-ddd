@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use axum::Router;
+use axum::middleware::from_fn;
 use domain::config::setting_interface::{CorsSetting, HttpServerSetting};
 use shared::constant::path::RUN_MODE_DEVELOPMENT;
 use tower_http::{
@@ -9,6 +10,8 @@ use tower_http::{
     timeout::TimeoutLayer,
     trace::{DefaultMakeSpan, DefaultOnRequest, DefaultOnResponse, TraceLayer},
 };
+
+use crate::http::middleware::metric_middleware::metric_middleware;
 
 /// Apply all global middleware to the router.
 /// `mode` controls request logging: only "development" enables TraceLayer at INFO.
@@ -22,7 +25,8 @@ where
             axum::http::StatusCode::REQUEST_TIMEOUT,
             Duration::from_millis(cfg.timeouts.read_timeout_ms),
         ))
-        .layer(build_cors(&cfg.security.cors));
+        .layer(build_cors(&cfg.security.cors))
+        .layer(from_fn(metric_middleware));
 
     if mode == RUN_MODE_DEVELOPMENT {
         router.layer(
