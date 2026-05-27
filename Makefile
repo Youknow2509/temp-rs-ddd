@@ -50,7 +50,7 @@ docs: ## Generate rustdoc documentation
 # ===
 
 dev: ## Run server with hot reload (APP_MODE=development)
-	APP_MODE=development $(CARGO) watch -c -x "run -p $(BIN) -- serve"
+	RUST_BACKTRACE=1 APP_MODE=development $(CARGO) watch -c -x "run -p $(BIN) -- serve"
 
 run: ## Run server (uses default APP_MODE=production)
 	$(CARGO) run -p $(BIN) -- serve
