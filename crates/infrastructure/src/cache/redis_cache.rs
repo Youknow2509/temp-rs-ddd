@@ -1,6 +1,7 @@
 use std::fmt;
 use std::time::Duration;
 
+use bytes::Bytes;
 use domain::cache::DistributedCache;
 use redis::AsyncCommands;
 use serde::Serialize;
@@ -35,8 +36,10 @@ impl std::error::Error for RedisCacheError {}
 
 // ── Serialization helpers ─────────────────────────────────────────────────────
 
-fn ser<V: Serialize>(v: &V) -> Result<Vec<u8>, RedisCacheError> {
-    serde_json::to_vec(v).map_err(RedisCacheError::serde)
+fn ser<V: Serialize>(v: &V) -> Result<Bytes, RedisCacheError> {
+    serde_json::to_vec(v)
+        .map(Bytes::from)
+        .map_err(RedisCacheError::serde)
 }
 
 fn de<V: DeserializeOwned>(bytes: &[u8]) -> Result<V, RedisCacheError> {
@@ -93,12 +96,12 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let bytes: Option<Vec<u8>> = with_conn!(self.pool, conn, {
+        let bytes: Option<Bytes> = with_conn!(self.pool, conn, {
             conn.get(key).await.map_err(RedisCacheError::redis)?
         });
         match bytes {
             None => Ok(None),
-            Some(b) => de(&b).map(Some),
+            Some(b) => de(b.as_ref()).map(Some),
         }
     }
 
@@ -113,7 +116,7 @@ impl DistributedCache for RedisCache {
                     let secs = d.as_secs().max(1);
                     redis::cmd("SET")
                         .arg(key)
-                        .arg(&data)
+                        .arg(data.as_ref())
                         .arg("EX")
                         .arg(secs)
                         .query_async::<()>(conn)
@@ -121,7 +124,7 @@ impl DistributedCache for RedisCache {
                         .map_err(RedisCacheError::redis)?;
                 }
                 None => {
-                    conn.set::<_, _, ()>(key, &data)
+                    conn.set::<_, _, ()>(key, data.as_ref())
                         .await
                         .map_err(RedisCacheError::redis)?;
                 }
@@ -211,7 +214,7 @@ impl DistributedCache for RedisCache {
                     let secs = d.as_secs().max(1);
                     redis::cmd("SET")
                         .arg(key)
-                        .arg(&data)
+                        .arg(data.as_ref())
                         .arg("NX")
                         .arg("EX")
                         .arg(secs)
@@ -222,7 +225,7 @@ impl DistributedCache for RedisCache {
                 }
                 None => {
                     let set: bool = conn
-                        .set_nx(key, &data)
+                        .set_nx(key, data.as_ref())
                         .await
                         .map_err(RedisCacheError::redis)?;
                     set
@@ -260,7 +263,7 @@ impl DistributedCache for RedisCache {
         if keys.is_empty() {
             return Ok(vec![]);
         }
-        let raw: Vec<Option<Vec<u8>>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Option<Bytes>> = with_conn!(self.pool, conn, {
             redis::cmd("MGET")
                 .arg(keys)
                 .query_async(conn)
@@ -270,7 +273,7 @@ impl DistributedCache for RedisCache {
         raw.into_iter()
             .map(|maybe| match maybe {
                 None => Ok(None),
-                Some(b) => de(&b).map(Some),
+                Some(b) => de(b.as_ref()).map(Some),
             })
             .collect()
     }
@@ -307,7 +310,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(value)?;
         let len: u64 = with_conn!(self.pool, conn, {
-            conn.lpush(key, &data)
+            conn.lpush(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -320,7 +323,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(value)?;
         let len: u64 = with_conn!(self.pool, conn, {
-            conn.rpush(key, &data)
+            conn.rpush(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -331,12 +334,12 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let bytes: Option<Vec<u8>> = with_conn!(self.pool, conn, {
+        let bytes: Option<Bytes> = with_conn!(self.pool, conn, {
             conn.lpop(key, None).await.map_err(RedisCacheError::redis)?
         });
         match bytes {
             None => Ok(None),
-            Some(b) => de(&b).map(Some),
+            Some(b) => de(b.as_ref()).map(Some),
         }
     }
 
@@ -344,12 +347,12 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let bytes: Option<Vec<u8>> = with_conn!(self.pool, conn, {
+        let bytes: Option<Bytes> = with_conn!(self.pool, conn, {
             conn.rpop(key, None).await.map_err(RedisCacheError::redis)?
         });
         match bytes {
             None => Ok(None),
-            Some(b) => de(&b).map(Some),
+            Some(b) => de(b.as_ref()).map(Some),
         }
     }
 
@@ -358,12 +361,12 @@ impl DistributedCache for RedisCache {
         V: DeserializeOwned,
     {
         #[allow(clippy::cast_possible_truncation)]
-        let raw: Vec<Vec<u8>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Bytes> = with_conn!(self.pool, conn, {
             conn.lrange(key, start as isize, stop as isize)
                 .await
                 .map_err(RedisCacheError::redis)?
         });
-        raw.iter().map(|b| de(b)).collect()
+        raw.iter().map(|b| de(b.as_ref())).collect()
     }
 
     async fn list_len(&self, key: &str) -> Result<u64, Self::Error> {
@@ -381,7 +384,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let added: u64 = with_conn!(self.pool, conn, {
-            conn.sadd(key, &data)
+            conn.sadd(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -394,7 +397,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let removed: u64 = with_conn!(self.pool, conn, {
-            conn.srem(key, &data)
+            conn.srem(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -407,7 +410,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let is_member: bool = with_conn!(self.pool, conn, {
-            conn.sismember(key, &data)
+            conn.sismember(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -418,10 +421,10 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let raw: Vec<Vec<u8>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Bytes> = with_conn!(self.pool, conn, {
             conn.smembers(key).await.map_err(RedisCacheError::redis)?
         });
-        raw.iter().map(|b| de(b)).collect()
+        raw.iter().map(|b| de(b.as_ref())).collect()
     }
 
     async fn set_card(&self, key: &str) -> Result<u64, Self::Error> {
@@ -439,7 +442,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(value)?;
         let added: u64 = with_conn!(self.pool, conn, {
-            conn.hset(key, field, &data)
+            conn.hset(key, field, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -450,12 +453,18 @@ impl DistributedCache for RedisCache {
     where
         V: Serialize + Send + Sync,
     {
-        let items: Result<Vec<(&&str, Vec<u8>)>, _> =
-            fields.iter().map(|(f, v)| ser(v).map(|b| (f, b))).collect();
-        let items = items?;
+        let mut pipe = redis::pipe();
+        for (field, value) in fields {
+            let data = ser(value)?;
+            pipe.cmd("HSET")
+                .arg(key)
+                .arg(field)
+                .arg(data.as_ref())
+                .ignore();
+        }
         with_conn!(self.pool, conn, {
-            let (): () = conn
-                .hset_multiple(key, &items)
+            let (): () = pipe
+                .query_async(conn)
                 .await
                 .map_err(RedisCacheError::redis)?;
         });
@@ -466,14 +475,14 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let bytes: Option<Vec<u8>> = with_conn!(self.pool, conn, {
+        let bytes: Option<Bytes> = with_conn!(self.pool, conn, {
             conn.hget(key, field)
                 .await
                 .map_err(RedisCacheError::redis)?
         });
         match bytes {
             None => Ok(None),
-            Some(b) => de(&b).map(Some),
+            Some(b) => de(b.as_ref()).map(Some),
         }
     }
 
@@ -485,7 +494,7 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let raw: Vec<Option<Vec<u8>>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Option<Bytes>> = with_conn!(self.pool, conn, {
             redis::cmd("HMGET")
                 .arg(key)
                 .arg(fields)
@@ -496,7 +505,7 @@ impl DistributedCache for RedisCache {
         raw.into_iter()
             .map(|maybe| match maybe {
                 None => Ok(None),
-                Some(b) => de(&b).map(Some),
+                Some(b) => de(b.as_ref()).map(Some),
             })
             .collect()
     }
@@ -505,11 +514,11 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let raw: Vec<(String, Vec<u8>)> = with_conn!(self.pool, conn, {
+        let raw: Vec<(String, Bytes)> = with_conn!(self.pool, conn, {
             conn.hgetall(key).await.map_err(RedisCacheError::redis)?
         });
         raw.into_iter()
-            .map(|(f, b)| de(&b).map(|v| (f, v)))
+            .map(|(f, b)| de(b.as_ref()).map(|v| (f, v)))
             .collect()
     }
 
@@ -546,7 +555,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let added: u64 = with_conn!(self.pool, conn, {
-            conn.zadd(key, &data, score)
+            conn.zadd(key, data.as_ref(), score)
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -559,7 +568,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let removed: u64 = with_conn!(self.pool, conn, {
-            conn.zrem(key, &data)
+            conn.zrem(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -572,7 +581,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let score: Option<f64> = with_conn!(self.pool, conn, {
-            conn.zscore(key, &data)
+            conn.zscore(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -585,7 +594,7 @@ impl DistributedCache for RedisCache {
     {
         let data = ser(member)?;
         let rank: Option<u64> = with_conn!(self.pool, conn, {
-            conn.zrank(key, &data)
+            conn.zrank(key, data.as_ref())
                 .await
                 .map_err(RedisCacheError::redis)?
         });
@@ -597,12 +606,12 @@ impl DistributedCache for RedisCache {
         V: DeserializeOwned,
     {
         #[allow(clippy::cast_possible_truncation)]
-        let raw: Vec<Vec<u8>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Bytes> = with_conn!(self.pool, conn, {
             conn.zrange(key, start as isize, stop as isize)
                 .await
                 .map_err(RedisCacheError::redis)?
         });
-        raw.iter().map(|b| de(b)).collect()
+        raw.iter().map(|b| de(b.as_ref())).collect()
     }
 
     async fn zset_range_by_score<V>(
@@ -614,12 +623,12 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let raw: Vec<Vec<u8>> = with_conn!(self.pool, conn, {
+        let raw: Vec<Bytes> = with_conn!(self.pool, conn, {
             conn.zrangebyscore(key, min, max)
                 .await
                 .map_err(RedisCacheError::redis)?
         });
-        raw.iter().map(|b| de(b)).collect()
+        raw.iter().map(|b| de(b.as_ref())).collect()
     }
 
     async fn zset_card(&self, key: &str) -> Result<u64, Self::Error> {
@@ -635,7 +644,7 @@ impl DistributedCache for RedisCache {
     where
         V: DeserializeOwned,
     {
-        let bytes: Vec<u8> = with_conn!(self.pool, conn, {
+        let bytes: Bytes = with_conn!(self.pool, conn, {
             redis::Script::new(script)
                 .key(keys)
                 .arg(args)
@@ -643,14 +652,14 @@ impl DistributedCache for RedisCache {
                 .await
                 .map_err(RedisCacheError::redis)?
         });
-        de(&bytes)
+        de(bytes.as_ref())
     }
 
     async fn eval_sha<V>(&self, sha: &str, keys: &[&str], args: &[&str]) -> Result<V, Self::Error>
     where
         V: DeserializeOwned,
     {
-        let bytes: Vec<u8> = with_conn!(self.pool, conn, {
+        let bytes: Bytes = with_conn!(self.pool, conn, {
             redis::cmd("EVALSHA")
                 .arg(sha)
                 .arg(keys.len())
@@ -660,7 +669,7 @@ impl DistributedCache for RedisCache {
                 .await
                 .map_err(RedisCacheError::redis)?
         });
-        de(&bytes)
+        de(bytes.as_ref())
     }
 
     async fn script_load(&self, script: &str) -> Result<String, Self::Error> {

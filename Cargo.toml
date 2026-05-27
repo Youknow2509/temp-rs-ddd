@@ -105,6 +105,7 @@ deadpool-redis = { version = "0.23.0", features = ["rt_tokio_1", "cluster"] }
 
 moka = { version = "0.12", features = ["future"] }
 serde_json = { version = "1" }
+bytes = "1"
 
 scylla = { version = "1.6.0", features = ["rustls-023"] }
 rustls = { version = "0.23", features = [] }

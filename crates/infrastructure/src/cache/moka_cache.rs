@@ -2,6 +2,7 @@ use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use bytes::Bytes;
 use domain::cache::LocalCache;
 use domain::config::LocalCacheSetting;
 use moka::Expiry;
@@ -38,7 +39,7 @@ impl std::error::Error for MokaCacheError {
 // --- Cache entry ---
 
 struct CacheEntry {
-    data: Vec<u8>,
+    data: Bytes,
     expires_at: Option<Instant>,
 }
 
@@ -113,15 +114,17 @@ impl MokaCache {
 
 // --- Serialization helpers ---
 
-fn ser<V: Serialize>(v: &V) -> Result<Vec<u8>, MokaCacheError> {
-    serde_json::to_vec(v).map_err(MokaCacheError::Serde)
+fn ser<V: Serialize>(v: &V) -> Result<Bytes, MokaCacheError> {
+    serde_json::to_vec(v)
+        .map(Bytes::from)
+        .map_err(MokaCacheError::Serde)
 }
 
 fn de<V: DeserializeOwned>(bytes: &[u8]) -> Result<V, MokaCacheError> {
     serde_json::from_slice(bytes).map_err(MokaCacheError::Serde)
 }
 
-fn make_entry(data: Vec<u8>, ttl: Option<Duration>) -> Arc<CacheEntry> {
+fn make_entry(data: Bytes, ttl: Option<Duration>) -> Arc<CacheEntry> {
     Arc::new(CacheEntry {
         data,
         expires_at: ttl.map(|d| Instant::now() + d),
@@ -139,7 +142,7 @@ impl LocalCache for MokaCache {
     {
         match self.inner.get(key).await {
             None => Ok(None),
-            Some(entry) => de(&entry.data).map(Some),
+            Some(entry) => de(entry.data.as_ref()).map(Some),
         }
     }
 
@@ -177,7 +180,7 @@ impl LocalCache for MokaCache {
             .inner
             .get(key)
             .await
-            .and_then(|e| de::<i64>(&e.data).ok())
+            .and_then(|e| de::<i64>(e.data.as_ref()).ok())
             .unwrap_or(0);
         let new_val = current + delta;
         let data = ser(&new_val)?;
@@ -224,7 +227,7 @@ impl LocalCache for MokaCache {
         Fut: std::future::Future<Output = Result<V, Self::Error>> + Send,
     {
         if let Some(entry) = self.inner.get(key).await {
-            return de(&entry.data);
+            return de(entry.data.as_ref());
         }
         let value = f().await?;
         self.set(key, &value, ttl).await?;

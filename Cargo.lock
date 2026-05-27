@@ -1928,6 +1928,7 @@ dependencies = [
  "anyhow",
  "aws-credential-types",
  "aws-sdk-s3",
+ "bytes",
  "config",
  "deadpool-postgres",
  "deadpool-redis",

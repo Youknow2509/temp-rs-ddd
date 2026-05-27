@@ -4,32 +4,33 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-anyhow.workspace     = true
-config.workspace     = true
-serde.workspace      = true
-tokio.workspace      = true
-tracing.workspace    = true
+anyhow.workspace = true
+config.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+bytes.workspace = true
 
-tokio-postgres.workspace      = true
-deadpool-postgres.workspace   = true
+tokio-postgres.workspace = true
+deadpool-postgres.workspace = true
 postgres-native-tls.workspace = true
-native-tls.workspace          = true
+native-tls.workspace = true
 
-redis.workspace        = true
+redis.workspace = true
 deadpool-redis.workspace = true
 
-moka.workspace       = true
+moka.workspace = true
 serde_json.workspace = true
 
-scylla.workspace  = true
+scylla.workspace = true
 rustls.workspace = true
 
-aws-sdk-s3.workspace           = true
+aws-sdk-s3.workspace = true
 aws-credential-types.workspace = true
 
 rdkafka.workspace = true
 
-tonic.workspace        = true
+tonic.workspace = true
 tonic-health.workspace = true
 
 domain = { path = "../domain" }
