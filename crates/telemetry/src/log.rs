@@ -2,11 +2,10 @@ mod fields;
 mod fmt;
 
 use anyhow::Result;
+use domain::config::LoggerSetting;
 use tracing::Subscriber;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{EnvFilter, Layer, registry::LookupSpan};
-
-use domain::config::LoggerSetting;
 
 type LogLayers<S> = Vec<Box<dyn Layer<S> + Send + Sync + 'static>>;
 

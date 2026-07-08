@@ -1,8 +1,8 @@
 pub(super) mod topic01_handler;
 pub(super) mod topic02_handler;
 use crate::mq::message::MQMessage;
-use crate::state::AppState;
 use anyhow::Result;
+use infrastructure::state::AppState;
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
 

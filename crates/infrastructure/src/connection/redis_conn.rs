@@ -1,10 +1,8 @@
-use std::fmt;
-use std::time::Duration;
-
 use anyhow::{Context, Result, anyhow, bail};
 use deadpool_redis::{Config, Pool, Runtime};
-
 use domain::config::RedisSettingRepository;
+use std::fmt;
+use std::time::Duration;
 
 #[derive(Clone)]
 pub enum RedisPool {

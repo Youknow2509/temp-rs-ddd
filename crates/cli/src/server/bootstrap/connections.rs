@@ -5,14 +5,13 @@
 //! can clone the pointer without copying any connection data.
 
 use anyhow::{Context, Result};
-use tracing::info;
-
 use domain::config::SystemConfig;
 use infrastructure::cache::{MokaCache, RedisCache};
 use infrastructure::connection::{
     Connections, GrpcClients, KafkaClient, PgPool, S3Client, ScyllaSession, grpc_conn, kafka_conn,
     postgres_conn, redis_conn, s3_conn, scylla_conn,
 };
+use tracing::info;
 
 pub async fn init(config: &SystemConfig) -> Result<Connections> {
     let (pg, redis, scylla, s3) = tokio::task::block_in_place(|| -> Result<_> {

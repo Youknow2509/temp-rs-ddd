@@ -1,7 +1,7 @@
 use crate::mq::dto::Topic01Dto;
 use crate::mq::message::MQMessage;
-use crate::state::AppState;
 use anyhow::Result;
+use infrastructure::state::AppState;
 use std::sync::Arc;
 
 pub async fn handle(_app_state: Arc<AppState>, msg: MQMessage) -> Result<()> {

@@ -1,16 +1,13 @@
-use std::sync::Arc;
-use std::time::Duration;
-
-use anyhow::Result;
-use rdkafka::consumer::Consumer;
-use tokio::sync::{mpsc, watch};
-use tokio::task::JoinHandle;
-
-use interface::state::AppState;
-
 use super::commit::{CommitAck, CommitState};
 use super::message::message_to_mq_message;
 use super::pipeline::{TopicPipelines, build_topic_pipelines};
+use anyhow::Result;
+use infrastructure::state::AppState;
+use rdkafka::consumer::Consumer;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::{mpsc, watch};
+use tokio::task::JoinHandle;
 
 pub fn start(
     app_state: &Arc<AppState>,

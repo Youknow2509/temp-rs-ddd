@@ -1,11 +1,10 @@
+use super::fields::JsonWithStaticFields;
 use tracing::Subscriber;
 use tracing_subscriber::{
     EnvFilter, Layer,
     fmt::{self, MakeWriter},
     registry::LookupSpan,
 };
-
-use super::fields::JsonWithStaticFields;
 
 pub(super) fn make_fmt_layer<S, W>(
     use_json: bool,

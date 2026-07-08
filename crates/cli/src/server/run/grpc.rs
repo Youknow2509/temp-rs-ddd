@@ -1,9 +1,8 @@
 //! gRPC server runtime.
 
-use std::sync::Arc;
-
 use anyhow::Result;
-use interface::state::AppState;
+use infrastructure::state::AppState;
+use std::sync::Arc;
 use tokio::task::JoinHandle;
 
 pub fn start(app_state: &Arc<AppState>) -> Result<JoinHandle<()>> {

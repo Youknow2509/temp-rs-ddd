@@ -1,6 +1,5 @@
-use utoipa::OpenApi;
-
 use crate::http::swagger::security_swagger::SecurityAddon;
+use utoipa::OpenApi;
 
 const SYSTEM_TAG: &str = "system";
 

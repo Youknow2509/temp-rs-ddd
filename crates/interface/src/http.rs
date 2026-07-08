@@ -5,11 +5,9 @@ pub mod response;
 pub mod router;
 pub mod swagger;
 
-use std::sync::Arc;
-
 use axum::Router;
-
-use crate::state::AppState;
+use infrastructure::state::AppState;
+use std::sync::Arc;
 
 pub fn router(state: Arc<AppState>) -> Router {
     self::router::mount(state)

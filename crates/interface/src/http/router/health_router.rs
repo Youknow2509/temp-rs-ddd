@@ -1,6 +1,7 @@
 use std::sync::Arc;
 // use axum::{Router, routing::get};
-use crate::{http::handle::health_handle, state::AppState};
+use crate::http::handle::health_handle;
+use infrastructure::state::AppState;
 use utoipa_axum::{router::OpenApiRouter, routes as utoipa_routes};
 
 pub fn routes(state: Arc<AppState>) -> OpenApiRouter {

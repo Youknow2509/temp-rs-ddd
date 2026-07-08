@@ -1,9 +1,5 @@
-use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::num::NonZeroUsize;
-use std::sync::Arc;
-use std::time::Duration;
-
 use anyhow::{Context, Result, bail};
+use domain::config::ScyllaDbSettingRepository;
 use rustls::ClientConfig;
 use rustls::pki_types::pem::PemObject;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
@@ -20,9 +16,11 @@ use scylla::policies::retry::{
     DefaultRetryPolicy, DowngradingConsistencyRetryPolicy, FallthroughRetryPolicy, RetryPolicy,
 };
 use scylla::policies::speculative_execution::SimpleSpeculativeExecutionPolicy;
-
-use domain::config::ScyllaDbSettingRepository;
 use shared::constant::path::RUN_MODE_DEVELOPMENT;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::num::NonZeroUsize;
+use std::sync::Arc;
+use std::time::Duration;
 use tonic::async_trait;
 
 pub type ScyllaSession = Arc<Session>;

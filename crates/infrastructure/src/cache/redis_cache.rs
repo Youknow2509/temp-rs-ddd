@@ -1,13 +1,11 @@
-use std::fmt;
-use std::time::Duration;
-
+use crate::connection::RedisPool;
 use bytes::Bytes;
 use domain::cache::DistributedCache;
 use redis::AsyncCommands;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
-
-use crate::connection::RedisPool;
+use std::fmt;
+use std::time::Duration;
 
 // --- Error ---
 

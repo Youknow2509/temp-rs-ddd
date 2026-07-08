@@ -1,12 +1,10 @@
-use std::fmt;
-use std::time::Duration;
-
 use anyhow::{Context, Result};
+use domain::config::{KafkaConnectionSetting, KafkaConsumerSetting, KafkaProducerSetting};
 use rdkafka::ClientConfig;
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use rdkafka::producer::FutureProducer;
-
-use domain::config::{KafkaConnectionSetting, KafkaConsumerSetting, KafkaProducerSetting};
+use std::fmt;
+use std::time::Duration;
 
 pub type KafkaProducer = FutureProducer;
 pub type KafkaConsumerClient = StreamConsumer;

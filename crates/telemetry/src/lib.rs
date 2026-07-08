@@ -4,13 +4,12 @@ pub mod metric;
 pub(crate) mod trace;
 
 use anyhow::Result;
+use domain::config::TelemetrySystemSetting;
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use tokio::task::JoinHandle;
 use tracing::info;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
-
-use domain::config::TelemetrySystemSetting;
 
 pub struct TelemetryGuard {
     _log_guard: Option<WorkerGuard>,

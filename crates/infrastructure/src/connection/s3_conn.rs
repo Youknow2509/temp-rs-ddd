@@ -1,13 +1,11 @@
-use std::time::Duration;
-
 use anyhow::{Context, Result, bail};
 use aws_credential_types::Credentials;
 use aws_sdk_s3::Client;
 use aws_sdk_s3::config::retry::RetryConfig;
 use aws_sdk_s3::config::timeout::TimeoutConfig;
 use aws_sdk_s3::config::{Builder as S3ConfigBuilder, Region};
-
 use domain::config::ObjectStorageSetting;
+use std::time::Duration;
 
 pub type S3Client = Client;
 

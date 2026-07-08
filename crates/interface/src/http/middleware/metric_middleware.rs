@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use axum::{
     extract::{MatchedPath, Request},
     http::StatusCode,
@@ -7,6 +5,7 @@ use axum::{
     response::Response,
 };
 use metrics::{counter, histogram};
+use std::time::Instant;
 
 /// Per-group metric middleware.
 /// Mount on a route group with `axum::middleware::from_fn(metric_middleware)`.

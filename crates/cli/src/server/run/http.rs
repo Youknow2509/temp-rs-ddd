@@ -1,9 +1,8 @@
 //! HTTP server runtime.
 
-use std::{net::SocketAddr, sync::Arc};
-
 use anyhow::Result;
-use interface::state::AppState;
+use infrastructure::state::AppState;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::{net::TcpListener, task::JoinHandle};
 use tracing::info;
 

@@ -1,7 +1,6 @@
 //! Load the merged `SystemConfig` from the hierarchical sources.
 
 use anyhow::{Context, Result};
-
 use domain::config::SystemConfig;
 use infrastructure::config;
 

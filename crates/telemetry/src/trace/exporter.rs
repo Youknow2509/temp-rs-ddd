@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
-use opentelemetry_otlp::{WithExportConfig, WithHttpConfig, WithTonicConfig};
-
 use domain::config::TracingSetting;
+use opentelemetry_otlp::{WithExportConfig, WithHttpConfig, WithTonicConfig};
 
 pub(super) fn build_exporter(cfg: &TracingSetting) -> Result<opentelemetry_otlp::SpanExporter> {
     match cfg.protocol.as_str() {

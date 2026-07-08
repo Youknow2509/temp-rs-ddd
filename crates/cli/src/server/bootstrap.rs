@@ -4,11 +4,10 @@ pub mod config;
 pub mod connections;
 pub mod telemetry;
 
-use std::sync::Arc;
-
 use self::telemetry::TelemetryGuard;
 use anyhow::Result;
-use interface::state::AppState;
+use infrastructure::state::AppState;
+use std::sync::Arc;
 use tracing::info;
 
 pub struct Bootstrap {

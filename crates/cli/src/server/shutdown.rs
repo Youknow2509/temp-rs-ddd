@@ -2,11 +2,10 @@
 
 pub mod signal;
 
-use anyhow::Result;
-use tracing::info;
-
 use super::bootstrap::Bootstrap;
 use super::run::RunHandles;
+use anyhow::Result;
+use tracing::info;
 
 /// Await SIGINT / SIGTERM, then drain all resources in dependency order:
 ///

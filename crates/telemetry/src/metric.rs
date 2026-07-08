@@ -1,9 +1,8 @@
 mod recorder;
 
 use anyhow::Result;
-use tokio::task::JoinHandle;
-
 use domain::config::MetricsSetting;
+use tokio::task::JoinHandle;
 
 pub fn build(cfg: &MetricsSetting) -> Result<Option<JoinHandle<()>>> {
     recorder::install(cfg)

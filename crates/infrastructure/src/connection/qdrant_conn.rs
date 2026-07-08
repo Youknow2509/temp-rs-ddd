@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use anyhow::{Context, Result};
 use domain::config::QdrantSettingRepository;
 use qdrant_client::{
@@ -7,6 +5,7 @@ use qdrant_client::{
     config::{CompressionEncoding, QdrantConfig},
     qdrant::{CreateCollectionBuilder, Distance, VectorParamsBuilder},
 };
+use std::time::Duration;
 
 pub type QdrantClient = Qdrant;
 

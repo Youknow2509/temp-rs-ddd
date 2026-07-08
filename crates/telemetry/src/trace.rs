@@ -3,12 +3,11 @@ mod propagator;
 mod provider;
 
 use anyhow::Result;
+use domain::config::TracingSetting;
 use opentelemetry::{global, trace::TracerProvider as _};
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::Registry;
-
-use domain::config::TracingSetting;
 
 pub(crate) struct TraceOutput {
     pub(crate) provider: SdkTracerProvider,

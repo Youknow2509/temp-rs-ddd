@@ -1,12 +1,10 @@
-use std::time::Duration;
-
 use anyhow::{Context, Result, bail};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod, Runtime};
+use domain::config::PostgresqlSettingRepository;
 use native_tls::TlsConnector;
 use postgres_native_tls::MakeTlsConnector;
+use std::time::Duration;
 use tokio_postgres::{Config as PgConfig, config::SslMode};
-
-use domain::config::PostgresqlSettingRepository;
 
 pub type PgPool = Pool;
 

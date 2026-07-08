@@ -1,12 +1,9 @@
 use std::sync::Arc;
 
+use crate::http::{dto::health_dto::HealthQuery, response::ApiResponse};
 use axum::extract::{Query, State};
+use infrastructure::state::AppState;
 use serde_json::{Value, json};
-
-use crate::{
-    http::{dto::health_dto::HealthQuery, response::ApiResponse},
-    state::AppState,
-};
 
 #[utoipa::path(
     get,

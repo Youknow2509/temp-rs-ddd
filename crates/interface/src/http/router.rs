@@ -1,19 +1,17 @@
 pub mod health_router;
 
-use std::sync::Arc;
-
+use super::middleware::global_middleware;
+use crate::http::swagger::api_swagger::SwaggerApiDoc;
 use axum::Router;
+use infrastructure::state::AppState;
 use shared::constant::path::RUN_MODE_DEVELOPMENT;
+use std::sync::Arc;
 use utoipa::OpenApi;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
 use utoipa_scalar::{Scalar, Servable as _};
 use utoipa_swagger_ui::SwaggerUi;
-
-use crate::{http::swagger::api_swagger::SwaggerApiDoc, state::AppState};
-
-use super::middleware::global_middleware;
 
 // Compose all routes and apply global middleware.
 //

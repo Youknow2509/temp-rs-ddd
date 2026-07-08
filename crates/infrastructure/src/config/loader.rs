@@ -10,16 +10,14 @@
 //! (the env source uses `__` as the prefix separator, so single-underscore
 //! variables like `APP_MODE` are ignored when parsing overrides).
 
-use std::env;
-
 use anyhow::{Context, Result};
 use config::{Config, Environment, File};
-
 use domain::config::SystemConfig;
 use shared::constant::{
     env::ENV_RUN_MODE,
     path::{CONFIG_BASE_DEFAULT, CONFIG_BASE_LOCAL, CONFIG_DIR, RUN_MODE_PRODUCTION},
 };
+use std::env;
 
 const ENV_PREFIX: &str = "APP";
 const ENV_SEPARATOR: &str = "__";

@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use domain::config::KafkaTopicSetting;
+use infrastructure::state::AppState;
 use interface::mq::handler;
 use interface::mq::message::MQMessage;
-use interface::state::AppState;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 

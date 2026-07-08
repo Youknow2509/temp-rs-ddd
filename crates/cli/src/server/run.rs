@@ -5,10 +5,9 @@ pub mod http;
 pub mod kafka_consumer;
 pub mod websocket;
 
-use std::sync::Arc;
-
 use anyhow::Result;
-use interface::state::AppState;
+use infrastructure::state::AppState;
+use std::sync::Arc;
 use tokio::{sync::watch, task::JoinHandle};
 
 #[derive(Debug)]

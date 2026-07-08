@@ -1,14 +1,12 @@
+use anyhow::{Context, Result, bail};
+use domain::config::{GrpcClientSetting, GrpcClientsSetting};
 use std::collections::HashMap;
 use std::time::Duration;
-
-use anyhow::{Context, Result, bail};
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Endpoint, Identity};
 use tonic_health::ServingStatus;
 use tonic_health::pb::HealthCheckRequest;
 use tonic_health::pb::health_client::HealthClient;
 use tracing::warn;
-
-use domain::config::{GrpcClientSetting, GrpcClientsSetting};
 
 /// A map of logical service name → gRPC `Channel`.
 ///

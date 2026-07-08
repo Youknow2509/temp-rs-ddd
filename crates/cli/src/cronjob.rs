@@ -1,7 +1,6 @@
 //! Cronjob runner: owns config + the schedule of background jobs.
 
 use anyhow::{Context, Result};
-
 use domain::config::SystemConfig;
 use infrastructure::config;
 

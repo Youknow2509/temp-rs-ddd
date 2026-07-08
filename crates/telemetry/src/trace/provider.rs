@@ -1,6 +1,6 @@
-use std::time::Duration;
-
+use super::exporter::build_exporter;
 use anyhow::Result;
+use domain::config::TracingSetting;
 use opentelemetry::KeyValue;
 use opentelemetry_sdk::{
     Resource, runtime,
@@ -9,10 +9,7 @@ use opentelemetry_sdk::{
         span_processor_with_async_runtime::BatchSpanProcessor,
     },
 };
-
-use domain::config::TracingSetting;
-
-use super::exporter::build_exporter;
+use std::time::Duration;
 
 pub(super) fn build_provider(cfg: &TracingSetting) -> Result<SdkTracerProvider> {
     let resource = Resource::builder_empty()

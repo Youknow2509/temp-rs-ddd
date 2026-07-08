@@ -3,7 +3,6 @@ mod server;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-
 use cronjob::Cronjob;
 
 #[derive(Debug, Parser)]

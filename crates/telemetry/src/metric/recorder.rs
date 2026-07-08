@@ -1,8 +1,7 @@
 use anyhow::{Context, Result};
+use domain::config::MetricsSetting;
 use metrics_exporter_prometheus::PrometheusBuilder;
 use tokio::task::JoinHandle;
-
-use domain::config::MetricsSetting;
 use tracing;
 
 pub(super) fn install(cfg: &MetricsSetting) -> Result<Option<JoinHandle<()>>> {
